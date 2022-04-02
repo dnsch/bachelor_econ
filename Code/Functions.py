@@ -45,7 +45,7 @@ parent_directory = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath
 
 
 
-def process_merra_data(data_directory, seasonal = True, variables = [], two_vars = True, hourly = False, time_steps = 0, y_steps = 91, x_steps = 0, datatype = 'float32'):
+def process_merra_data(data_directory, seasonal_indices = True, variables = [], two_vars = True, timing='', time_steps = 0, y_steps = 91, x_steps = 0, datatype = 'float32'):
     """
     process_merra_data() returns the mean numpy array of the MERRA2 lists for given variables (max 2 variables per MERRA2 netCDF4 file) 
     and a given frequency and optionally also the mean numpy arrays for the dry and wet seasons.
@@ -104,27 +104,18 @@ def process_merra_data(data_directory, seasonal = True, variables = [], two_vars
         data_novapr_1(ndarray):     a numpy array containing the mean values for the dry seasons of the second variable.
         data_total_1(ndarray):      a numpy array containing the mean values for the entire time of the second variable.
     """
-
     
+
     # add path to data folder of interest
     directory = parent_directory + data_directory
-
-    #aod MERRA2 files have a different naming structure and hence the need of adjustment
-    aod = False
-
-    if (directory[-5:] == 's_Nx\\'):
-        aod = True
 
     # boolean to for later initialization of all variables and arrays
     first = True
 
     file_list = os.listdir(directory)
-    # counter variables for mean calculation and indication of wet and dry seasons
     # (daily/monthly depending on input)
     counter_total = 0
-    if seasonal:
-        counter_junsep = 0
-        counter_novapr = 0
+    if seasonal_indices:
         junsep_indices = []
         novapr_indices = []
 
@@ -145,65 +136,52 @@ def process_merra_data(data_directory, seasonal = True, variables = [], two_vars
                 latitudes = data.variables['lat'][:]
                 time = data.variables['time'][:]
 
-                if hourly:
-                    
+                if timing == 'hourly':
                     if two_vars:
+                        if seasonal_indices:
+                            hourly_novapr_indices = []
+                            hourly_junsep_indices = []
+                            for i in range(24*counter_total, 24*counter_total + 24) : hourly_novapr_indices.append(i)
+                            novapr_indices.append(counter_total)
 
-                        if seasonal:
-                            #init by always taking daily mean
-                            data_junsep_0 = data.variables[variables[0]][:,:,:]
-                            data_junsep_0 = np.sum(data_junsep_0, axis = 0); data_junsep_0 /= 24
-
-                            data_junsep_1 = data.variables[variables[1]][:,:,:]
-                            data_junsep_1 = np.sum(data_junsep_1, axis = 0); data_junsep_1 /= 24
-
-                            data_novapr_0 = data.variables[variables[0]][:,:,:]
-                            data_novapr_0 = np.sum(data_novapr_0, axis = 0); data_novapr_0 /= 24
-
-                            data_novapr_1 = data.variables[variables[0]][:,:,:]
-                            data_novapr_1 = np.sum(data_novapr_1, axis = 0); data_novapr_1 /= 24
-
-                            for i in range(24*counter_total, 24*counter_total + 24) : novapr_indices.append(i) 
                         #create data ndarray with initialized time steps
-                        data_total_0 = data.variables[variables[0]][:,:,:]
                         data_total_time_0 = np.zeros((time_steps, y_steps, x_steps), dtype=datatype)
-                        data_total_time_0[0:24,:,:] = data_total_0
-                        data_total_0 = np.sum(data_total_0, axis = 0); data_total_0 /= 24
+                        data_total_time_0[0:24,:,:] = data.variables[variables[0]][:,:,:]
 
-                        data_total_1 = data.variables[variables[1]][:,:,:]
                         data_total_time_1 = np.zeros((time_steps, y_steps, x_steps), dtype=datatype)
-                        data_total_time_1[0:24,:,:] = data_total_1
-                        data_total_1 = np.sum(data_total_1, axis = 0); data_total_1 /= 24
-
+                        data_total_time_1[0:24,:,:] = data.variables[variables[1]][:,:,:]
                     else:
+                        if seasonal_indices:
+                            hourly_novapr_indices = []
+                            hourly_junsep_indices = []
+                            for i in range(24*counter_total, 24*counter_total + 24) : hourly_novapr_indices.append(i)
+                            novapr_indices.append(counter_total)
 
-                        if seasonal:
-
-                            data_junsep_0 = data.variables[variables[0]][:,:,:]
-                            data_junsep_0 = np.sum(data_junsep_0, axis = 0); data_junsep_0 /= 24
-
-                            data_novapr_0 = data.variables[variables[0]][:,:,:]
-                            data_novapr_0 = np.sum(data_novapr_0, axis = 0); data_novapr_0 /= 24
-
-                            for i in range(24*counter_total, 24*counter_total + 24) : novapr_indices.append(i) 
-
-                        data_total_0 = data.variables[variables[0]][:,:,:]
+                        #create data ndarray with initialized time steps
                         data_total_time_0 = np.zeros((time_steps, y_steps, x_steps), dtype=datatype)
-                        data_total_time_0[0:24,:,:] = data_total_0
-                        data_total_0 = np.sum(data_total_0, axis = 0); data_total_0 /= 24
+                        data_total_time_0[0:24,:,:] = data.variables[variables[0]][:,:,:]
 
-                else:
-                    if seasonal:
-                        data_junsep = data.variables[variables[0]][:,:,:]; data_junsep = data_junsep[0,:,:]
-                        data_novapr = data.variables[variables[0]][:,:,:]; data_novapr = data_novapr[0,:,:]
-                    data_total = data.variables[variables[0]][:,:,:]; data_total = data_total[0,:,:]
+                elif timing == 'three_hourly':
+                    if seasonal_indices:
+                        three_hourly_novapr_indices = []
+                        three_hourly_junsep_indices = []
+                        for i in range(8*counter_total, 8*counter_total + 8) : three_hourly_novapr_indices.append(i)
+                        novapr_indices.append(counter_total) 
 
-                if seasonal:
-                    counter_novapr += 1
+                    data_total_time = np.zeros((time_steps, y_steps, x_steps), dtype=datatype)
+                    data_total_time[0:8,:,:] = data.variables[variables[0]][:,:,:]
+
+                elif timing == 'monthly':
+                    if seasonal_indices:
+                        novapr_indices.append(counter_total)
+
+                    data_total_time = np.zeros((time_steps, y_steps, x_steps), dtype=datatype)
+                    data_total_time[0,:,:] = data.variables[variables[0]][:,:,:]
+
                 counter_total += 1
                 # continuity check to see if we got all dates covered
                 # since aod files have another naming convention, we control for that
-                if aod:
+                if timing == 'monthly':
                     continuity_check.append(datetime.strptime(filename[27:33], '%Y%m').strftime('%Y-%m'))
                 else:
                     continuity_check.append(datetime.strptime(filename[27:35], '%Y%m%d').strftime('%Y-%m-%d'))
@@ -211,130 +189,149 @@ def process_merra_data(data_directory, seasonal = True, variables = [], two_vars
                 first = False
                 continue
 
-            if seasonal:
+            if seasonal_indices:
                 # calculate mean for jun-sep period using regex
                 if (re.search(r'(.*)-(06|07|08|09)-(.*)', data.RangeBeginningDate)):
                     # calculate current data to add to overall data
-
-                    if hourly:
-                    
-                        data_current_0 = data.variables[variables[0]][:,:,:]
-                        data_current_time_0 = data_current_0
-                        data_current_0 = np.sum(data_current_0, axis = 0); data_current_0 /= 24
-                        data_junsep_0 += data_current_0
-
-                        if two_vars:
-
-                            data_current_1 = data.variables[variables[1]][:,:,:]
-                            data_current_time_1 = data_current_1
-                            data_current_1 = np.sum(data_current_1, axis = 0); data_current_1 /= 24
-                            data_junsep_1 += data_current_1
-
-                        for i in range(24*counter_total, 24*counter_total + 24) : junsep_indices.append(i) 
-
-                    else:
-
-                        data_current = data.variables[variables[0]][:,:,:]; data_current = data_current[0,:,:]
-                        data_junsep += data_current
-
-                    counter_junsep += 1
+                    if timing == 'hourly':
+                        for i in range(24*counter_total, 24*counter_total + 24) : hourly_junsep_indices.append(i) 
+                        junsep_indices.append(counter_total)
+                    elif timing == 'three_hourly':
+                        for i in range(8*counter_total, 8*counter_total + 8) : three_hourly_junsep_indices.append(i) 
+                        junsep_indices.append(counter_total)
+                    elif timing == 'monthly':
+                        junsep_indices.append(counter_total)
 
                 # calculate mean for nov-apr period using regex
                 if (re.search(r'(.*)-(11|12|01|02|03|04)-(.*)', data.RangeBeginningDate)):
                     # calculate current data to add to overall data
-
-                    if hourly:
-                    
-                        data_current_0 = data.variables[variables[0]][:,:,:]
-                        data_current_time_0 = data_current_0
-                        data_current_0 = np.sum(data_current_0, axis = 0); data_current_0 /= 24
-                        data_novapr_0 += data_current_0
-
-                        if two_vars:
-
-                            data_current_1 = data.variables[variables[1]][:,:,:]
-                            data_current_time_1 = data_current_1
-                            data_current_1 = np.sum(data_current_1, axis = 0); data_current_1 /= 24
-                            data_novapr_1 += data_current_1
-
-                        for i in range(24*counter_total, 24*counter_total + 24) : novapr_indices.append(i) 
-
-                    else:
-
-                        data_current = data.variables[variables[0]][:,:,:]; data_current = data_current[0,:,:]
-                        data_novapr += data_current
-                        
-                    counter_novapr += 1
-
+                    if timing == 'hourly':
+                        for i in range(24*counter_total, 24*counter_total + 24) : hourly_novapr_indices.append(i) 
+                        novapr_indices.append(counter_total)
+                    elif timing == 'three_hourly':
+                        for i in range(8*counter_total, 8*counter_total + 8) : three_hourly_novapr_indices.append(i) 
+                        novapr_indices.append(counter_total)
+                    elif timing == 'monthly':
+                        novapr_indices.append(counter_total)
+    
             # calculate total data independent of season
-
-            if hourly:
-                    
-                data_current_0 = data.variables[variables[0]][:,:,:]
-                data_current_time_0 = data_current_0
-                data_current_0 = np.sum(data_current_0, axis = 0); data_current_0 /= 24
-                data_total_0 += data_current_0
+            if timing == 'hourly':
+                data_current_time_0 = data.variables[variables[0]][:,:,:]
                 data_total_time_0[24*counter_total: 24*counter_total+24,:,:] = data_current_time_0
-
                 if two_vars:
-
-                    data_current_1 = data.variables[variables[1]][:,:,:]
-                    data_current_time_1 = data_current_1
-                    data_current_1 = np.sum(data_current_1, axis = 0); data_current_1 /= 24
-                    data_total_1 += data_current_1
+                    data_current_time_1 = data.variables[variables[1]][:,:,:]
                     data_total_time_1[24*counter_total:24*counter_total+24,:,:] = data_current_time_1
-
-            else:
-
-                data_current = data.variables[variables[0]][:,:,:]; data_current = data_current[0,:,:]
-                data_total += data_current
+            elif timing == 'three_hourly':
+                data_current_time = data.variables[variables[0]][:,:,:]
+                data_total_time[8*counter_total: 8*counter_total+8,:,:] = data_current_time
+            elif timing == 'monthly':
+                data_current_time = data.variables[variables[0]][:,:,:]
+                data_total_time[counter_total,:,:] = data_current_time
 
             counter_total += 1
-
             # add to dates array
-
-            if aod:
+            if timing == 'monthly':
                 continuity_check.append(datetime.strptime(filename[27:33], '%Y%m').strftime('%Y-%m'))
             else:
                 continuity_check.append(datetime.strptime(filename[27:35], '%Y%m%d').strftime('%Y-%m-%d'))
 
-    # divide for mean
-
-    if hourly:
-
-        data_junsep_0 /= counter_junsep
-        data_novapr_0 /= counter_novapr
-        data_total_0 /= counter_total
-
-        if two_vars:
-
-            data_junsep_1 /= counter_junsep
-            data_novapr_1 /= counter_novapr
-            data_total_1 /= counter_total
-    else:
-        data_junsep /= counter_junsep
-        data_novapr /= counter_novapr
-        data_total /= counter_total
-
-
     # continuity check:
-    if hourly:
+    if timing == 'hourly':
         # given time range:
         test_ts = pd.Series(pd.to_datetime(continuity_check))
         # continuous time range from 1980-01-01 to 2016-12-31
         continuous_ts = pd.date_range(start='1980-01-01', end='2016-12-31')
         assert (continuous_ts.difference(test_ts).size == 0)
-        if two_vars:
-            return [longitudes, latitudes, time, data_total_time_0, data_total_time_1,junsep_indices, novapr_indices,data_junsep_0, data_novapr_0, data_total_0, data_junsep_1, data_novapr_1, data_total_1]
+        if seasonal_indices:
+            if two_vars:
+                return [longitudes, latitudes, time, data_total_time_0, data_total_time_1, hourly_junsep_indices, junsep_indices, hourly_novapr_indices, novapr_indices]
+            else:
+                return [longitudes, latitudes, time, data_total_time_0, hourly_junsep_indices, junsep_indices, hourly_novapr_indices, hourly_novapr_indices]
         else:
-            return [longitudes, latitudes, time, data_total_time_0,junsep_indices, novapr_indices,data_junsep_0, data_novapr_0, data_total_0]
-    else:
+            if two_vars:
+                return [longitudes, latitudes, time, data_total_time_0, data_total_time_1]
+            else:
+                return [longitudes, latitudes, time, data_total_time_0]
+
+    elif timing == 'three_hourly':
+        # given time range:
+        test_ts = pd.Series(pd.to_datetime(continuity_check))
+        # continuous time range from 1980-01-01 to 2016-12-31
+        continuous_ts = pd.date_range(start='1980-01-01', end='2016-12-31')
+        assert (continuous_ts.difference(test_ts).size == 0)
+        if seasonal_indices:
+            return [longitudes, latitudes, time, data_total_time, three_hourly_junsep_indices, junsep_indices, three_hourly_novapr_indices, novapr_indices]
+        else:
+            return [longitudes, latitudes, time, data_total_time]
+    
+    elif timing == 'monthly':
         #given time range:
         test_ts = pd.Series(pd.to_datetime(continuity_check).strftime('%Y-%m'))
         #continuous time range from 1980-01 to 2016-12
         continuous_ts = pd.date_range(start='1980-01', end='2016-12', freq='M').strftime('%Y-%m')
         assert (continuous_ts.difference(test_ts).size == 0)
-        return [longitudes, latitudes, time, junsep_indices, novapr_indices,data_junsep, data_novapr, data_total]
+        if seasonal_indices:
+            return [longitudes, latitudes, time, data_total_time, junsep_indices, novapr_indices]
+        else:
+            return [longitudes, latitudes, time, data_total_time]
+
+
+@jit
+def extract_seasonal_data(total_data, novapr_indices, junsep_indices):
+    novapr_data = np.zeros((np.array([novapr_indices], dtype='float32').shape[1], total_data.shape[1], total_data.shape[2]), dtype = 'float32')
+    junsep_data = np.zeros((np.array([junsep_indices], dtype='float32').shape[1], total_data.shape[1], total_data.shape[2]), dtype = 'float32')
+
+    idx = 0
+    counter_novapr = 0
+    counter_junsep = 0
+    for entry in total_data:
+        if idx in novapr_indices:
+            novapr_data[counter_novapr] = entry
+            counter_novapr += 1
+        elif idx in junsep_indices:
+            junsep_data[counter_junsep] = entry
+            counter_junsep += 1
+        idx += 1
+
+    return novapr_data, junsep_data
+
+@jit
+def hourly_data_to_daily_mean(data):
+    daily_mean_data = np.zeros((round(data.shape[0]/24), data.shape[1], data.shape[2]), dtype = 'float32')
+    day_counter = 0
+    daily_data = np.zeros((data.shape[1], data.shape[2]), dtype = 'float32')
+
+    idx = 0
+
+    for hourly_data in data:
+        daily_data += hourly_data
+        if ((idx != 0) and (idx%24 == 0)):
+            daily_mean_data[day_counter] = daily_data / 24
+            daily_data = np.zeros((data.shape[1], data.shape[2]), dtype = 'float32')
+            day_counter += 1
+        idx += 1
+    return daily_mean_data
+
+@jit
+def three_hourly_data_to_daily_mean(data):
+    daily_mean_data = np.zeros((round(data.shape[0]/8), data.shape[1], data.shape[2]), dtype = 'float32')
+    day_counter = 0
+    daily_data = np.zeros((data.shape[1], data.shape[2]), dtype = 'float32')
+
+    idx = 0
+
+    for hourly_data in data:
+        daily_data += hourly_data
+        if ((idx != 0) and (idx%8 == 0)):
+            daily_mean_data[day_counter] = daily_data / 8
+            daily_data = np.zeros((data.shape[1], data.shape[2]), dtype = 'float32')
+            day_counter += 1
+        idx += 1
+    return daily_mean_data
+
+
+
+
 
 
 def process_outcome_data():
@@ -1508,7 +1505,7 @@ def get_pixels_data_two_dim(data, pixels_list, pixels_data_x_shape = 105, pixels
     return pixel_data
 
 @jit
-def get_hourly_region_data(data, region):
+def get_time_span_region_data(data, region):
     hourly_region_data = np.zeros((data.shape[0], region.shape[0]), dtype = 'float32')
     idx = 0
 
@@ -1526,43 +1523,86 @@ def get_regional_mean_data(regional_data):
     
     return regional_mean_data
 
-@jit
-def hourly_regional_data_to_daily_mean(data):
-    daily_mean_data = np.zeros((round(data.shape[0]/24), data.shape[1]), dtype = 'float32')
-    day_counter = 0
-    daily_data = np.zeros((data.shape[1]), dtype = 'float32')
+# @jit
+# def hourly_regional_data_to_daily_mean(data):
+#     daily_mean_data = np.zeros((round(data.shape[0]/24), data.shape[1]), dtype = 'float32')
+#     day_counter = 0
+#     daily_data = np.zeros((data.shape[1]), dtype = 'float32')
 
-    idx = 0
+#     idx = 0
 
-    for hourly_data in data:
-        daily_data += hourly_data
-        if ((idx != 0) and (idx%24 == 0)):
-            daily_mean_data[day_counter] = daily_data / 24
-            daily_data = np.zeros((data.shape[1]), dtype = 'float32')
-            day_counter += 1
-        idx += 1
-    return daily_mean_data
+#     for hourly_data in data:
+#         daily_data += hourly_data
+#         if ((idx != 0) and (idx%24 == 0)):
+#             daily_mean_data[day_counter] = daily_data / 24
+#             daily_data = np.zeros((data.shape[1]), dtype = 'float32')
+#             day_counter += 1
+#         idx += 1
+#     return daily_mean_data
 
-@jit
-def extract_hourly_jun_sep_data(data,hourly_junsep_indices_np,hourly_novapr_indices_np):
+# @jit
+# def extract_hourly_jun_sep_data(data,hourly_junsep_indices_np,hourly_novapr_indices_np):
 
-    hourly_junsep_counter = 0
-    hourly_novapr_counter = 0
-    idx = 0
+#     hourly_junsep_counter = 0
+#     hourly_novapr_counter = 0
+#     idx = 0
 
-    hourly_junsep_data = np.zeros((hourly_junsep_indices_np.shape[1], data.shape[1]), dtype = 'float32')
-    hourly_novapr_data = np.zeros((hourly_novapr_indices_np.shape[1], data.shape[1]), dtype = 'float32')
+#     hourly_junsep_data = np.zeros((hourly_junsep_indices_np.shape[1], data.shape[1]), dtype = 'float32')
+#     hourly_novapr_data = np.zeros((hourly_novapr_indices_np.shape[1], data.shape[1]), dtype = 'float32')
     
-    for hourly_data in data:
-        if idx in hourly_junsep_indices_np:
-            hourly_junsep_data[hourly_junsep_counter] = hourly_data
-            hourly_junsep_counter += 1 
-        elif idx in hourly_novapr_indices_np:
-            hourly_novapr_data[hourly_novapr_counter] = hourly_data
-            hourly_novapr_counter += 1
-        idx += 1
+#     for hourly_data in data:
+#         if idx in hourly_junsep_indices_np:
+#             hourly_junsep_data[hourly_junsep_counter] = hourly_data
+#             hourly_junsep_counter += 1 
+#         elif idx in hourly_novapr_indices_np:
+#             hourly_novapr_data[hourly_novapr_counter] = hourly_data
+#             hourly_novapr_counter += 1
+#         idx += 1
         
-    return (hourly_junsep_data, hourly_novapr_data)
+#     return (hourly_junsep_data, hourly_novapr_data)
+
+@jit
+def create_lag_array(data, lag_num = 10):
+    lag_array = np.zeros((data.shape[0], lag_num+1))
+    
+    for i in range(lag_num, lag_array.shape[0]):
+        for lag in range(lag_num+1):
+            lag_array[i][lag] = data[i-lag]
+    
+    return lag_array
+
+@jit
+def create_regression_rhs(exogenous_variables, junsep_indices, novapr_indices):
+    reg_rhs = np.zeros((exogenous_variables.shape[0], exogenous_variables.shape[1] + 2))
+    
+    idx = 0
+    for row in reg_rhs:
+        if idx in junsep_indices:
+            row[0] = 1
+        elif idx in novapr_indices:
+            row[1] = 1
+        idx += 1
+    row_idx = 0
+    for variable_row in exogenous_variables:
+        idx = 0
+        for variable in variable_row:
+            reg_rhs[row_idx][idx+2] = variable
+            idx += 1
+        row_idx += 1
+    return reg_rhs
+
+def create_regression_df(lag_data, lag_num, other_ex_data, y_vector, junsep_indices, novapr_indices, variable_names = [], y_name = ''):
+    reg_array = create_lag_array(lag_data, lag_num = lag_num)
+
+    for data in other_ex_data:
+        reg_array = np.concatenate((reg_array, data), axis=1)
+    reg_array = create_regression_rhs(reg_array, np.array([junsep_indices], dtype='float32'), np.array([novapr_indices], dtype='float32'))
+
+    reg_array_df = pd.DataFrame(reg_array, columns = variable_names)
+    reg_array_df.insert(0, y_name, y_vector, True)
+
+    return reg_array_df[10:]
+
 
 
 "--------------------------------------------------------------------"

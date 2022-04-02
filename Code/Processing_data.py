@@ -4,8 +4,11 @@ import numpy as np
 import pandas as pd
 
 
-from Functions import process_merra_data, process_outcome_data
-from Functions import advection_diffusion_fd
+from functions import process_merra_data, process_outcome_data, hourly_data_to_daily_mean, three_hourly_data_to_daily_mean, extract_seasonal_data
+from functions import advection_diffusion_fd
+from functions import return_region_pixel_array
+from functions import three_hourly_data_to_daily_mean, create_regression_df
+from functions import get_time_span_region_data, get_regional_mean_data
 
 parent_directory = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
@@ -21,20 +24,19 @@ def main():
     '2.1_dust_data'
     "--------------------------------------------------------------------"
 
-
-    print('processing aod raw data ...')
-    (monthly_longitudes,
-    monthly_latitudes,
+    print('processing monthly aerosol optical depth raw data ...')
+    (total_longitudes,
+    total_latitudes,
     monthly_time,
+    aod_monthly_data,
     monthly_junsep_indices,
-    monthly_novapr_indices,
-    aod_mean_data_junsep,
-    aod_mean_data_novapr,
-    aod_mean_data_total) =  process_merra_data('\\raw_data\\2.1_dust_data\\MERRA2_instM_2d_gas_Nx\\', 
-                                                seasonal = True, variables = ['AODANA'], two_vars = False, 
-                                                hourly = False, time_steps = 0, y_steps = 0, x_steps = 0, 
-                                                datatype = 'float32')
-    print('processed aod raw data')
+    monthly_novapr_indices) = process_merra_data('\\raw_data\\2.1_dust_data\\monthly_aod\\', 
+                                                 seasonal_indices = True, variables = ['AODANA'], two_vars = False, 
+                                                 timing = 'monthly', time_steps = 444, y_steps = 361, x_steps = 576, 
+                                                 datatype = 'float32')
+
+    aod_monthly_novapr_data, aod_monthly_junsep_data = extract_seasonal_data(aod_monthly_data, monthly_novapr_indices, monthly_junsep_indices)
+    print('processed monthly aerosol optical depth raw data')
 
 
     "--------------------------------------------------------------------"
@@ -43,37 +45,35 @@ def main():
 
 
     print('processing wind raw data ...')
-    (hourly_longitudes,
-    hourly_latitudes,
+    (west_africa_longitudes,
+    west_africa_latitudes,
     hourly_time,
-    wind_eastward_total_data,
-    wind_northward_total_data,
+    wind_eastward_hourly_data,
+    wind_northward_hourly_data,
     hourly_junsep_indices,
+    daily_junsep_indices,
     hourly_novapr_indices,
-    wind_eastward_mean_data_junsep,
-    wind_eastward_mean_data_novapr,
-    wind_eastward_mean_data_total,
-    wind_northward_mean_data_junsep,
-    wind_northward_mean_data_novapr,
-    wind_northward_mean_data_total) =   process_merra_data('\\raw_data\\3.1_physical_model\\wind\\', 
-                                                            seasonal = True, variables = ['ULML', 'VLML'], two_vars = True, 
-                                                            hourly = True, time_steps = 324360, y_steps = 91, x_steps = 105, 
-                                                            datatype = 'float32')
+    daily_novapr_indices) =   process_merra_data('\\raw_data\\3.1_physical_model\\hourly_wind\\', 
+                                                 seasonal_indices = True, variables = ['ULML', 'VLML'], two_vars = True, 
+                                                 timing = 'hourly', time_steps = 324360, y_steps = 91, x_steps = 105, 
+                                                 datatype = 'float32')
+                                                 
+    wind_eastward_hourly_novapr_data, wind_eastward_hourly_junsep_data = extract_seasonal_data(wind_eastward_hourly_data, hourly_novapr_indices, hourly_junsep_indices)     
+    wind_northward_hourly_novapr_data, wind_northward_hourly_junsep_data = extract_seasonal_data(wind_northward_hourly_data, hourly_novapr_indices, hourly_junsep_indices) 
     print('processed wind raw data')
 
     print('processing dustmass - pm 2.5 raw data ...')                                                    
-    (hourly_longitudes,
-    hourly_latitudes,
+    (west_africa_longitudes,
+    west_africa_latitudes,
     hourly_time,
-    dust_total_data,
-    hourly_junsep_indices,
-    hourly_novapr_indices,
-    dust_mean_data_junsep,
-    dust_mean_data_novapr,
-    dust_mean_data_total) = process_merra_data('\\raw_data\\3.1_physical_model\\dusmass_pm2.5\\', 
-                                                seasonal = True, variables = ['DUSMASS25'], two_vars = False, 
-                                                hourly = True, time_steps = 324360, y_steps = 91, x_steps = 105, 
-                                                datatype = 'float32')
+    dust_hourly_data) = process_merra_data('\\raw_data\\3.1_physical_model\\hourly_dusmass_pm2.5\\', 
+                                            seasonal_indices = False, variables = ['DUSMASS25'], two_vars = False, 
+                                            timing = 'hourly', time_steps = 324360, y_steps = 91, x_steps = 105, 
+                                            datatype = 'float32')
+
+    dust_hourly_novapr_data, dust_hourly_junsep_data = extract_seasonal_data(dust_hourly_data, hourly_novapr_indices, hourly_novapr_indices)
+
+    # dust_daily_data = hourly_data_to_daily_mean(dust_hourly_data)
     print('processed dustmass - pm 2.5 raw data')   
 
 
@@ -82,35 +82,44 @@ def main():
     "--------------------------------------------------------------------"
 
 
-    print('processing bias corrected total precipitation raw data ...')                                                    
-    (hourly_longitudes,
-    hourly_latitudes,
+    print('processing hourly bias corrected total precipitation raw data ...') 
+    (west_africa_longitudes,
+    west_africa_latitudes,
     hourly_time,
-    precipitation_total_data,
-    hourly_junsep_indices,
-    hourly_novapr_indices,
-    precipitation_mean_data_junsep,
-    precipitation_mean_data_novapr,
-    precipitation_mean_data_total) = process_merra_data('\\raw_data\\3.3_model_implementation\\precipitation\\', 
-                                                seasonal = True, variables = ['PRECTOTCORR'], two_vars = False, 
-                                                hourly = True, time_steps = 324360, y_steps = 91, x_steps = 105, 
-                                                datatype = 'float32')
-    print('processed bias corrected total precipitation raw data')  
+    precipitation_hourly_data) = process_merra_data('\\raw_data\\3.3_model_implementation\\hourly_precipitation\\', 
+                                                    seasonal_indices = False, variables = ['PRECTOTCORR'], two_vars = False, 
+                                                    timing = 'hourly', time_steps = 324360, y_steps = 91, x_steps = 105, 
+                                                    datatype = 'float32')
 
-    print('processing surface temperature raw data ...')                                                    
-    (hourly_longitudes,
-    hourly_latitudes,
+    precipitation_daily_data = hourly_data_to_daily_mean(precipitation_hourly_data)
+    print('processed hourly bias corrected total precipitation raw data')  
+
+    print('processing surface temperature raw data ...') 
+    (west_africa_longitudes,
+    west_africa_latitudes,
     hourly_time,
-    temperature_total_data,
-    hourly_junsep_indices,
-    hourly_novapr_indices,
-    temperature_mean_data_junsep,
-    temperature_mean_data_novapr,
-    temperature_mean_data_total) = process_merra_data('\\raw_data\\3.3_model_implementation\\temperature\\', 
-                                                seasonal = True, variables = ['TLML'], two_vars = False, 
-                                                hourly = True, time_steps = 324360, y_steps = 91, x_steps = 105, 
-                                                datatype = 'float32')
+    temperature_hourly_data) = process_merra_data('\\raw_data\\3.3_model_implementation\\hourly_temperature\\', 
+                                                  seasonal_indices = False, variables = ['TLML'], two_vars = False, 
+                                                  timing = 'hourly', time_steps = 324360, y_steps = 91, x_steps = 105, 
+                                                  datatype = 'float32')
+
+    temperature_daily_data = hourly_data_to_daily_mean(temperature_hourly_data)                                  
     print('processed surface temperature raw data')  
+
+    print('processing aerosol optical depth raw data ...')                                                    
+    (west_africa_longitudes,
+    west_africa_latitudes,
+    three_hourly_time,
+    aod_three_hourly_data,
+    three_hourly_junsep_indices,
+    daily_junsep_indices,
+    three_hourly_novapr_indices,
+    daily_novapr_indices) = process_merra_data('\\raw_data\\3.3_model_implementation\\three_hourly_aod\\', 
+                                                seasonal_indices = True, variables = ['AODANA'], two_vars = False, 
+                                                timing = 'three_hourly', time_steps = 108120, y_steps = 91, x_steps = 105, 
+                                                datatype = 'float32')
+    aod_daily_data = three_hourly_data_to_daily_mean(aod_three_hourly_data)
+    print('processed aerosol optical depth raw data') 
 
     ######################################################################
     # Saving MERRA2 Data
@@ -130,6 +139,18 @@ def main():
     with open(parent_directory + '\\processed_data\\monthly_novapr_indices', 'wb') as pickle_file:
         pickle.dump(monthly_novapr_indices, pickle_file)
 
+    with open(parent_directory + '\\processed_data\\daily_junsep_indices', 'wb') as pickle_file:
+        pickle.dump(daily_junsep_indices, pickle_file)
+
+    with open(parent_directory + '\\processed_data\\daily_novapr_indices', 'wb') as pickle_file:
+        pickle.dump(daily_novapr_indices, pickle_file)
+    
+    with open(parent_directory + '\\processed_data\\three_hourly_junsep_indices', 'wb') as pickle_file:
+        pickle.dump(three_hourly_junsep_indices, pickle_file)
+
+    with open(parent_directory + '\\processed_data\\three_hourly_novapr_indices', 'wb') as pickle_file:
+        pickle.dump(three_hourly_novapr_indices, pickle_file)
+
     with open(parent_directory + '\\processed_data\\hourly_junsep_indices', 'wb') as pickle_file:
         pickle.dump(hourly_junsep_indices, pickle_file)
 
@@ -139,39 +160,49 @@ def main():
     
     print('saving processed monthly and hourly geographical and time arrays to \\processed_data ...')
     #save numpy arrays
-    #monthly geo and time data
-    with open(parent_directory + '\\processed_data\\monthly_longitudes.npy', 'wb') as numpy_array:
-        np.save(numpy_array, monthly_longitudes)
+    #geo data
+    with open(parent_directory + '\\processed_data\\total_longitudes.npy', 'wb') as numpy_array:
+        np.save(numpy_array, total_longitudes)
+    del total_longitudes
     
-    with open(parent_directory + '\\processed_data\\monthly_latitudes.npy', 'wb') as numpy_array:
-        np.save(numpy_array, monthly_latitudes)
+    with open(parent_directory + '\\processed_data\\total_latitudes.npy', 'wb') as numpy_array:
+        np.save(numpy_array, total_latitudes)
+    del total_latitudes
+    
+    with open(parent_directory + '\\processed_data\\west_africa_longitudes.npy', 'wb') as numpy_array:
+        np.save(numpy_array, west_africa_longitudes)
+    
+    with open(parent_directory + '\\processed_data\\west_africa_latitudes.npy', 'wb') as numpy_array:
+        np.save(numpy_array, west_africa_latitudes)
 
+    #time data
     with open(parent_directory + '\\processed_data\\monthly_time.npy', 'wb') as numpy_array:
-        np.save(numpy_array, monthly_time)
+        np.save(numpy_array, monthly_time)    
+    del monthly_time
 
-    #hourly geo and time data
-    with open(parent_directory + '\\processed_data\\hourly_longitudes.npy', 'wb') as numpy_array:
-        np.save(numpy_array, hourly_longitudes)
-    
-    with open(parent_directory + '\\processed_data\\hourly_latitudes.npy', 'wb') as numpy_array:
-        np.save(numpy_array, hourly_latitudes)
+    with open(parent_directory + '\\processed_data\\three_hourly_time.npy', 'wb') as numpy_array:
+        np.save(numpy_array, three_hourly_time)
+    del three_hourly_time
 
     with open(parent_directory + '\\processed_data\\hourly_time.npy', 'wb') as numpy_array:
         np.save(numpy_array, hourly_time)
+    del hourly_time
     print('saved processed monthly and hourly geographical and time arrays to \\processed_data')
 
-
-    print('saving processed aod arrays to \\processed_data ...')
+    print('saving processed monthly aerosol optical depth arrays to \\processed_data ...')
     #aod data
-    with open(parent_directory + '\\processed_data\\aod_mean_data_junsep.npy', 'wb') as numpy_array:
-        np.save(numpy_array, aod_mean_data_junsep)
+    with open(parent_directory + '\\processed_data\\aod_monthly_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, aod_monthly_data)
+    del aod_monthly_data
     
-    with open(parent_directory + '\\processed_data\\aod_mean_data_novapr.npy', 'wb') as numpy_array:
-        np.save(numpy_array, aod_mean_data_novapr)
+    with open(parent_directory + '\\processed_data\\aod_monthly_novapr_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, aod_monthly_novapr_data)
+    del aod_monthly_novapr_data
 
-    with open(parent_directory + '\\processed_data\\aod_mean_data_total.npy', 'wb') as numpy_array:
-        np.save(numpy_array, aod_mean_data_total)
-    print('saved processed aod arrays to \\processed_data')
+    with open(parent_directory + '\\processed_data\\aod_monthly_junsep_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, aod_monthly_junsep_data)
+    del aod_monthly_junsep_data
+    print('saved processed monthly aerosol optical depth arrays to \\processed_data')
 
 
     "--------------------------------------------------------------------"
@@ -186,8 +217,11 @@ def main():
 
     print('saving processed outcome data .csv to \\processed_data ...')
     df_pwt_resid_log.to_csv(parent_directory + '\\processed_data\\pwt_resid_log.csv')
+    del df_pwt_resid_log
     df_wbdi_resid_log.to_csv(parent_directory + '\\processed_data\\wbdi_resid_log.csv')
+    del df_wbdi_resid_log
     df_mpd_resid_log.to_csv(parent_directory + '\\processed_data\\mpd_resid_log.csv')
+    del df_mpd_resid_log
     print('saved processed outcome data .csv to \\processed_data')
 
 
@@ -196,47 +230,38 @@ def main():
     "--------------------------------------------------------------------"
 
 
-    print('saving processed wind arrays to \\processed_data ...')
+    print('saving processed hourly wind arrays to \\processed_data ...')
     #wind data
-    with open(parent_directory + '\\processed_data\\wind_eastward_total_data.npy', 'wb') as numpy_array:
-        np.save(numpy_array, wind_eastward_total_data)
+    with open(parent_directory + '\\processed_data\\wind_eastward_hourly_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, wind_eastward_hourly_data)
     
-    with open(parent_directory + '\\processed_data\\wind_northward_total_data.npy', 'wb') as numpy_array:
-        np.save(numpy_array, wind_northward_total_data)
+    with open(parent_directory + '\\processed_data\\wind_northward_hourly_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, wind_northward_hourly_data)
 
-    with open(parent_directory + '\\processed_data\\wind_eastward_mean_data_junsep.npy', 'wb') as numpy_array:
-        np.save(numpy_array, wind_eastward_mean_data_junsep)
+    with open(parent_directory + '\\processed_data\\wind_eastward_hourly_novapr_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, wind_eastward_hourly_novapr_data)
 
-    with open(parent_directory + '\\processed_data\\wind_eastward_mean_data_novapr.npy', 'wb') as numpy_array:
-        np.save(numpy_array, wind_eastward_mean_data_novapr)
+    with open(parent_directory + '\\processed_data\\wind_eastward_hourly_junsep_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, wind_eastward_hourly_junsep_data)
     
-    with open(parent_directory + '\\processed_data\\wind_eastward_mean_data_total.npy', 'wb') as numpy_array:
-        np.save(numpy_array, wind_eastward_mean_data_total)
+    with open(parent_directory + '\\processed_data\\wind_northward_hourly_novapr_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, wind_northward_hourly_novapr_data)
     
-    with open(parent_directory + '\\processed_data\\wind_northward_mean_data_junsep.npy', 'wb') as numpy_array:
-        np.save(numpy_array, wind_northward_mean_data_junsep)
+    with open(parent_directory + '\\processed_data\\wind_northward_hourly_junsep_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, wind_northward_hourly_junsep_data)
+    print('saved processed hourly wind arrays to \\processed_data')
 
-    with open(parent_directory + '\\processed_data\\wind_northward_mean_data_novapr.npy', 'wb') as numpy_array:
-        np.save(numpy_array, wind_northward_mean_data_novapr)
-    
-    with open(parent_directory + '\\processed_data\\wind_northward_mean_data_total.npy', 'wb') as numpy_array:
-        np.save(numpy_array, wind_northward_mean_data_total)
-    print('saved processed wind arrays to \\processed_data')
-
-    print('saving processed dust arrays to \\processed_data ...')
+    print('saving processed hourly dust arrays to \\processed_data ...')
     #dust data
-    with open(parent_directory + '\\processed_data\\dust_total_data.npy', 'wb') as numpy_array:
-        np.save(numpy_array, dust_total_data)
+    with open(parent_directory + '\\processed_data\\dust_hourly_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, dust_hourly_data)
     
-    with open(parent_directory + '\\processed_data\\dust_mean_data_junsep.npy', 'wb') as numpy_array:
-        np.save(numpy_array, dust_mean_data_junsep)
+    with open(parent_directory + '\\processed_data\\dust_hourly_novapr_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, dust_hourly_novapr_data)
 
-    with open(parent_directory + '\\processed_data\\dust_mean_data_novapr.npy', 'wb') as numpy_array:
-        np.save(numpy_array, dust_mean_data_novapr)
-    
-    with open(parent_directory + '\\processed_data\\dust_mean_data_total.npy', 'wb') as numpy_array:
-        np.save(numpy_array, dust_mean_data_total)
-    print('saved processed dust arrays to \\processed_data')
+    with open(parent_directory + '\\processed_data\\dust_hourly_junsep_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, dust_hourly_junsep_data)
+    print('saved processed hourly dust arrays to \\processed_data')
 
 
     "--------------------------------------------------------------------"
@@ -244,89 +269,76 @@ def main():
     "--------------------------------------------------------------------"
 
 
-    print('saving processed precipitation arrays to \\processed_data ...')
+    print('saving processed hourly and daily mean precipitation arrays to \\processed_data ...')
     #precipitation data
-    with open(parent_directory + '\\processed_data\\precipitation_total_data.npy', 'wb') as numpy_array:
-        np.save(numpy_array, precipitation_total_data)
+    with open(parent_directory + '\\processed_data\\precipitation_hourly_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, precipitation_hourly_data)
     
-    with open(parent_directory + '\\processed_data\\precipitation_mean_data_junsep.npy', 'wb') as numpy_array:
-        np.save(numpy_array, precipitation_mean_data_junsep)
+    with open(parent_directory + '\\processed_data\\precipitation_daily_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, precipitation_daily_data)
+    print('saved processed hourly and daily mean precipitation arrays to \\processed_data')
 
-    with open(parent_directory + '\\processed_data\\precipitation_mean_data_novapr.npy', 'wb') as numpy_array:
-        np.save(numpy_array, precipitation_mean_data_novapr)
-    
-    with open(parent_directory + '\\processed_data\\precipitation_mean_data_total.npy', 'wb') as numpy_array:
-        np.save(numpy_array, precipitation_mean_data_total)
-    print('saved processed precipitation arrays to \\processed_data')
-
-    print('saving processed temperature arrays to \\processed_data ...')
+    print('saving processed hourly and daily mean temperature arrays to \\processed_data ...')
     #temperature data
-    with open(parent_directory + '\\processed_data\\temperature_total_data.npy', 'wb') as numpy_array:
-        np.save(numpy_array, temperature_total_data)
+    with open(parent_directory + '\\processed_data\\temperature_hourly_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, temperature_hourly_data)
     
-    with open(parent_directory + '\\processed_data\\temperature_mean_data_junsep.npy', 'wb') as numpy_array:
-        np.save(numpy_array, temperature_mean_data_junsep)
+    with open(parent_directory + '\\processed_data\\temperature_daily_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, temperature_daily_data)
+    print('saved processed hourly and daily mean temperature arrays to \\processed_data')
 
-    with open(parent_directory + '\\processed_data\\temperature_mean_data_novapr.npy', 'wb') as numpy_array:
-        np.save(numpy_array, temperature_mean_data_novapr)
+    print('saving processed three hourly and daily mean aerosol optical depth arrays to \\processed_data ...')
+    #temperature data
+    with open(parent_directory + '\\processed_data\\aod_three_hourly_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, aod_three_hourly_data)
     
-    with open(parent_directory + '\\processed_data\\temperature_mean_data_total.npy', 'wb') as numpy_array:
-        np.save(numpy_array, temperature_mean_data_total)
-    print('saved processed temperature arrays to \\processed_data')
+    with open(parent_directory + '\\processed_data\\aod_daily_data.npy', 'wb') as numpy_array:
+        np.save(numpy_array, aod_daily_data)
+    print('saved processed three hourly and daily mean aerosol optical depth arrays to \\processed_data')
 
+    
 
     ######################################################################
-    # Running Advection Diffusion Simulation
-    ######################################################################
-    
-
-    print('running dust advection diffusion simulation ...')
-    #create and save simulation data
-    min_time = 0
-    max_time = dust_total_data.shape[0]
-    time_step = (max_time - min_time)
-    simulated_dustmass =  advection_diffusion_fd(time_step, 105, 91, min_time, max_time, 91, 105, .4, dust_total_data, wind_eastward_total_data, wind_northward_total_data)
-    print('dust advection diffusion simulation terminated sucessfully')
-
-
-    ######################################################################
-    # Saving Advection Diffusion Simulation Data
+    # Preparing Regression Data
     ######################################################################
 
-    print('saving simulated dust advection diffusion array to \\processed_data ...')
-    with open(parent_directory + '\\processed_data\\simulated_dustmass.npy', 'wb') as numpy_array:
-        np.save(numpy_array, simulated_dustmass)
-    print('saved simulated dust advection diffusion array to \\processed_data')
+    "--------------------------------------------------------------------"
+    '3.3_model_implementation'
+    "--------------------------------------------------------------------"
 
-    print('calculating dust advection diffusion simulation total mean...')
-    simulated_dustmass_total_mean = np.sum(simulated_dustmass, axis = 0)/simulated_dustmass.shape[0]
-    print('calculation terminated succesfully')
+    bodele_region_pixels = return_region_pixel_array(region_name='bodele')
 
-    print('saving simulation total mean array to \\processed_data ...')
-    with open(parent_directory + '\\processed_data\\simulated_dustmass_total_mean.npy', 'wb') as numpy_array:
-        np.save(numpy_array, simulated_dustmass_total_mean)
-    print('saved simulation total mean array to \\processed_data')
+    togo_coast_pixel = return_region_pixel_array(region_name='togo_coast')
 
-    print('calculating dust advection diffusion simulation seasonal mean...')
-    simulated_dustmass_junsep_mean = np.zeros((91, 105), dtype='float32')
-    for i in hourly_junsep_indices:
-        simulated_dustmass_junsep_mean += simulated_dustmass[i]
-    simulated_dustmass_junsep_mean /= len(hourly_junsep_indices)
+    daily_bodele_aod_data = get_regional_mean_data(get_time_span_region_data(aod_daily_data, bodele_region_pixels))
+    daily_togo_coast_aod_data = get_time_span_region_data(aod_daily_data, togo_coast_pixel)
 
-    simulated_dustmass_novapr_mean = np.zeros((91, 105), dtype='float32')
-    for i in hourly_novapr_indices:
-        simulated_dustmass_novapr_mean += simulated_dustmass[i]
-    simulated_dustmass_novapr_mean /= len(hourly_novapr_indices)
-    print('calculation terminated succesfully')
+    # daily_bodele_dust_data = get_regional_mean_data(get_time_span_region_data(dust_total_data, bodele_region_pixels))
+    # daily_togo_coast_dust_data = get_time_span_region_data(dust_total_data, togo_coast_pixel)
 
-    print('saving simulation seasonal mean arrays to \\processed_data ...')
-    with open(parent_directory + '\\processed_data\\simulated_dustmass_junsep_mean.npy', 'wb') as numpy_array:
-        np.save(numpy_array, simulated_dustmass_junsep_mean)
+    daily_togo_precipitation_data = get_time_span_region_data(precipitation_daily_data, togo_coast_pixel)
+    daily_togo_temperature_data = get_time_span_region_data(temperature_daily_data, togo_coast_pixel)
 
-    with open(parent_directory + '\\processed_data\\simulated_dustmass_novapr_mean.npy', 'wb') as numpy_array:
-        np.save(numpy_array, simulated_dustmass_novapr_mean)
-    print('saved simulation seasonal mean arrays to \\processed_data')
-    
+    aod_reg_df = create_regression_df(daily_bodele_aod_data, 10, [daily_togo_precipitation_data,daily_togo_temperature_data],
+                                        daily_togo_coast_aod_data, daily_junsep_indices, daily_novapr_indices,
+                                        variable_names =   ['wet_season', 'dry_season', 'bod_aod_t-10', 'bod_aod_t-9',
+                                                            'bod_aod_t-8', 'bod_aod_t-7','bod_aod_t-6', 'bod_aod_t-5',
+                                                            'bod_aod_t-4', 'bod_aod_t-3','bod_aod_t-2', 'bod_aod_t-1',
+                                                            'bod_aod_t-0', 'precipitation', 'temperature'],
+                                        y_name = 'togo_coast_aod')
+                            
+    # dust_reg_df = create_regression_df(daily_bodele_dust_data, 10, [daily_togo_precipitation_data,daily_togo_temperature_data],
+    #                                     daily_togo_coast_dust_data, daily_junsep_indices, daily_novapr_indices,
+    #                                     variable_names =   ['wet_season', 'dry_season', 'bod_aod_t-10', 'bod_dust_t-9',
+    #                                                         'bod_dust_t-8', 'bod_dust_t-7','bod_dust_t-6', 'bod_dust_t-5',
+    #                                                         'bod_dust_t-4', 'bod_dust_t-3','bod_dust_t-2', 'bod_dust_t-1',
+    #                                                         'bod_dust_t-0', 'precipitation', 'temperature'],
+    #                                     y_name = 'togo_coast_dust')
+
+    aod_reg_df[(aod_reg_df['dry_season']==True)].iloc[: ,[0,3,14,15]].to_csv(parent_directory + '\\processed_data\\aod_reg_df_novapr.csv', index=False)
+
+    aod_reg_df[(aod_reg_df['wet_season']==True)].iloc[: ,[0,3,14,15]].to_csv(parent_directory + '\\processed_data\\aod_reg_df_junsep.csv', index=False)
+
 
 
 if __name__ == "__main__":
