@@ -5,10 +5,7 @@ import pandas as pd
 
 
 from functions import process_merra_data, process_outcome_data, hourly_data_to_daily_mean, three_hourly_data_to_daily_mean, extract_seasonal_data
-from functions import advection_diffusion_fd
-from functions import return_region_pixel_array
-from functions import three_hourly_data_to_daily_mean, create_regression_df
-from functions import get_time_span_region_data, get_regional_mean_data
+from functions import three_hourly_data_to_daily_mean
 
 parent_directory = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
@@ -296,48 +293,6 @@ def main():
         np.save(numpy_array, aod_daily_data)
     print('saved processed three hourly and daily mean aerosol optical depth arrays to \\processed_data')
 
-    
-
-    ######################################################################
-    # Preparing Regression Data
-    ######################################################################
-
-    "--------------------------------------------------------------------"
-    '3.3_model_implementation'
-    "--------------------------------------------------------------------"
-
-    bodele_region_pixels = return_region_pixel_array(region_name='bodele')
-
-    togo_coast_pixel = return_region_pixel_array(region_name='togo_coast')
-
-    daily_bodele_aod_data = get_regional_mean_data(get_time_span_region_data(aod_daily_data, bodele_region_pixels))
-    daily_togo_coast_aod_data = get_time_span_region_data(aod_daily_data, togo_coast_pixel)
-
-    # daily_bodele_dust_data = get_regional_mean_data(get_time_span_region_data(dust_total_data, bodele_region_pixels))
-    # daily_togo_coast_dust_data = get_time_span_region_data(dust_total_data, togo_coast_pixel)
-
-    daily_togo_precipitation_data = get_time_span_region_data(precipitation_daily_data, togo_coast_pixel)
-    daily_togo_temperature_data = get_time_span_region_data(temperature_daily_data, togo_coast_pixel)
-
-    aod_reg_df = create_regression_df(daily_bodele_aod_data, 10, [daily_togo_precipitation_data,daily_togo_temperature_data],
-                                        daily_togo_coast_aod_data, daily_junsep_indices, daily_novapr_indices,
-                                        variable_names =   ['wet_season', 'dry_season', 'bod_aod_t-10', 'bod_aod_t-9',
-                                                            'bod_aod_t-8', 'bod_aod_t-7','bod_aod_t-6', 'bod_aod_t-5',
-                                                            'bod_aod_t-4', 'bod_aod_t-3','bod_aod_t-2', 'bod_aod_t-1',
-                                                            'bod_aod_t-0', 'precipitation', 'temperature'],
-                                        y_name = 'togo_coast_aod')
-                            
-    # dust_reg_df = create_regression_df(daily_bodele_dust_data, 10, [daily_togo_precipitation_data,daily_togo_temperature_data],
-    #                                     daily_togo_coast_dust_data, daily_junsep_indices, daily_novapr_indices,
-    #                                     variable_names =   ['wet_season', 'dry_season', 'bod_aod_t-10', 'bod_dust_t-9',
-    #                                                         'bod_dust_t-8', 'bod_dust_t-7','bod_dust_t-6', 'bod_dust_t-5',
-    #                                                         'bod_dust_t-4', 'bod_dust_t-3','bod_dust_t-2', 'bod_dust_t-1',
-    #                                                         'bod_dust_t-0', 'precipitation', 'temperature'],
-    #                                     y_name = 'togo_coast_dust')
-
-    aod_reg_df[(aod_reg_df['dry_season']==True)].iloc[: ,[0,3,14,15]].to_csv(parent_directory + '\\processed_data\\aod_reg_df_novapr.csv', index=False)
-
-    aod_reg_df[(aod_reg_df['wet_season']==True)].iloc[: ,[0,3,14,15]].to_csv(parent_directory + '\\processed_data\\aod_reg_df_junsep.csv', index=False)
 
 
 
