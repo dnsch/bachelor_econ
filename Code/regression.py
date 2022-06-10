@@ -44,8 +44,8 @@ def main():
     mali_population_df = pd.read_csv(parent_directory + '\\raw_data\\3.3_model_implementation\\population_estimates\\gpw_v4_admin_unit_center_points_population_estimates_rev11_mli.csv')
     niger_population_df = pd.read_csv(parent_directory + '\\raw_data\\3.3_model_implementation\\population_estimates\\gpw_v4_admin_unit_center_points_population_estimates_rev11_ner.csv')
     nigeria_population_df = pd.read_csv(parent_directory + '\\raw_data\\3.3_model_implementation\\population_estimates\\gpw_v4_admin_unit_center_points_population_estimates_rev11_nga.csv')
-    sierra_leone_population_df = pd.read_csv(parent_directory + '\\raw_data\\3.3_model_implementation\\population_estimates\\gpw_v4_admin_unit_center_points_population_estimates_rev11_sle.csv')
     senegal_population_df = pd.read_csv(parent_directory + '\\raw_data\\3.3_model_implementation\\population_estimates\\gpw_v4_admin_unit_center_points_population_estimates_rev11_sen.csv')
+    sierra_leone_population_df = pd.read_csv(parent_directory + '\\raw_data\\3.3_model_implementation\\population_estimates\\gpw_v4_admin_unit_center_points_population_estimates_rev11_sle.csv')
     togo_population_df = pd.read_csv(parent_directory + '\\raw_data\\3.3_model_implementation\\population_estimates\\gpw_v4_admin_unit_center_points_population_estimates_rev11_tgo.csv')
 
     west_africa_longitudes = np.load(parent_directory + '\\processed_data\\west_africa_longitudes.npy')
@@ -110,14 +110,14 @@ def main():
     population_array = create_population_array([benin_population_df, burkina_faso_population_df, gambia_population_df,
                                             ghana_population_df, guinea_population_df, liberia_population_df,
                                             mali_population_df, niger_population_df, nigeria_population_df,
-                                            sierra_leone_population_df, senegal_population_df, togo_population_df],
+                                            senegal_population_df,sierra_leone_population_df,togo_population_df],
                                             west_africa_longitudes, west_africa_latitudes)
 
     temp_pop_array = population_array.copy()
     # population_weigth_array = create_population_weight_array_old(temp_pop_array)
     population_weigth_array = create_population_weight_array(temp_pop_array, ['benin', 'burkina_faso', 'gambia', 'ghana',
                                                                               'guinea', 'liberia','mali', 'niger', 'nigeria',
-                                                                              'sierra_leone', 'senegal', 'togo'])
+                                                                              'senegal', 'sierra_leone', 'togo'])
 
     #create population weight array that only takes the pixels where there actually exists populaton data, the others are set to 'NaN'
     country_population_weigth_array = population_weigth_array
@@ -157,42 +157,44 @@ def main():
     
     aod_weighted_dry_season_df = create_dust_exposure_df(aod_daily_data, aod_daily_data_weighted,
                                                                         ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                         'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                         'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                          37, daily_novapr_indices)[3]
 
     dust_weighted_dry_season_df =  create_dust_exposure_df(dust_daily_data, dust_daily_data_weighted,
-                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea', 'liberia',
-                                                                        'mali', 'niger', 'nigeria', 'sierra_leone', 'senegal', 'togo'],
+                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                         37, daily_novapr_indices)[3]                                                                   
 
     dust_predicted_weighted_dry_season_df =  create_dust_exposure_df(predicted_daily_dust_data, predicted_daily_dust_data_weighted,
-                                                                        ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea', 'liberia',
-                                                                         'mali', 'niger', 'nigeria', 'sierra_leone', 'senegal', 'togo'],
+                                                                        ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                           37, daily_novapr_indices)[3]
 
     precipitation_weighted_yearly_df = create_dust_exposure_df(precipitation_daily_data, precipitation_daily_data_weighted,
                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                    'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                    'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                     37, daily_novapr_indices)[1]
 
     temperature_weighted_yearly_df = create_dust_exposure_df(temperature_daily_data, temperature_daily_data_weighted,
                                                                     ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                     'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                     'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                      37, daily_novapr_indices)[1]
     
     precipitation_weighted_dry_season_df = create_dust_exposure_df(precipitation_daily_data, precipitation_daily_data_weighted,
                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                    'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                    'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                     37, daily_novapr_indices)[3]
 
     temperature_weighted_dry_season_df = create_dust_exposure_df(temperature_daily_data, temperature_daily_data_weighted,
                                                                     ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                     'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                     'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                      37, daily_novapr_indices)[3]
 
     # country weighted data:
@@ -201,95 +203,100 @@ def main():
 
     aod_country_weighted_yearly_df = create_dust_exposure_df_country_weighted(aod_daily_data, aod_daily_data_country_weighted,
                                                                         ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                         'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                         'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                          37, daily_novapr_indices)[1]
 
     aod_country_weighted_dry_season_df = create_dust_exposure_df_country_weighted(aod_daily_data, aod_daily_data_country_weighted,
                                                                         ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                         'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                         'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                          37, daily_novapr_indices)[3]
 
     dust_country_weighted_yearly_df =  create_dust_exposure_df_country_weighted(dust_daily_data, dust_daily_data_country_weighted,
-                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea', 'liberia',
-                                                                        'mali', 'niger', 'nigeria', 'sierra_leone', 'senegal', 'togo'],
+                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                         37, daily_novapr_indices)[1] 
 
     dust_country_weighted_dry_season_df =  create_dust_exposure_df_country_weighted(dust_daily_data, dust_daily_data_country_weighted,
-                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea', 'liberia',
-                                                                        'mali', 'niger', 'nigeria', 'sierra_leone', 'senegal', 'togo'],
+                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                         37, daily_novapr_indices)[3]                                                                   
 
     dust_predicted_country_weighted_dry_season_df =  create_dust_exposure_df_country_weighted(predicted_daily_dust_data, predicted_daily_dust_data_country_weighted,
-                                                                        ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea', 'liberia',
-                                                                         'mali', 'niger', 'nigeria', 'sierra_leone', 'senegal', 'togo'],
+                                                                        ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                           37, daily_novapr_indices)[3]
 
     precipitation_country_weighted_yearly_df = create_dust_exposure_df_country_weighted(precipitation_daily_data, precipitation_daily_data_country_weighted,
                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                    'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                    'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                     37, daily_novapr_indices)[1]
 
     temperature_country_weighted_yearly_df = create_dust_exposure_df_country_weighted(temperature_daily_data, temperature_daily_data_country_weighted,
                                                                     ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                     'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                     'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                      37, daily_novapr_indices)[1]
     
     precipitation_country_weighted_dry_season_df = create_dust_exposure_df_country_weighted(precipitation_daily_data, precipitation_daily_data_country_weighted,
                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                    'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                    'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                     37, daily_novapr_indices)[3]
 
     temperature_country_weighted_dry_season_df = create_dust_exposure_df_country_weighted(temperature_daily_data, temperature_daily_data_country_weighted,
                                                                     ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                     'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                     'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                      37, daily_novapr_indices)[3]
 
     # unweighted data
 
     aod_dry_season_df = create_dust_exposure_df(aod_daily_data, aod_daily_data_weighted,
                                                                         ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                         'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                         'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                          37, daily_novapr_indices)[2]
 
     dust_dry_season_df =  create_dust_exposure_df(dust_daily_data, dust_daily_data_weighted,
-                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea', 'liberia',
-                                                                        'mali', 'niger', 'nigeria', 'sierra_leone', 'senegal', 'togo'],
+                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                         37, daily_novapr_indices)[2]                                                                   
 
     dust_predicted_dry_season_df =  create_dust_exposure_df(predicted_daily_dust_data, predicted_daily_dust_data_weighted,
-                                                                        ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea', 'liberia',
-                                                                         'mali', 'niger', 'nigeria', 'sierra_leone', 'senegal', 'togo'],
+                                                                        ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                           37, daily_novapr_indices)[2]
 
     precipitation_yearly_df = create_dust_exposure_df(precipitation_daily_data, precipitation_daily_data_weighted,
                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                    'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                    'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                     37, daily_novapr_indices)[0]
 
     temperature_yearly_df = create_dust_exposure_df(temperature_daily_data, temperature_daily_data_weighted,
                                                                     ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                     'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                     'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                      37, daily_novapr_indices)[0]
     
     precipitation_dry_season_df = create_dust_exposure_df(precipitation_daily_data, precipitation_daily_data_weighted,
                                                                    ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                    'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                    'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                     37, daily_novapr_indices)[2]
 
     temperature_dry_season_df = create_dust_exposure_df(temperature_daily_data, temperature_daily_data_weighted,
                                                                     ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                     'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                     'senegal', 'togo'],
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'],
                                                                      37, daily_novapr_indices)[2]
 
     #country weighted:
@@ -335,16 +342,16 @@ def main():
                                                                         'dust_pred_wt_dry_t-3','dust_pred_wt_dry_t-4','dust_pred_wt_dry_t-5',])
 
     centroids_lat, centroids_lon = country_centroids_one_dim(country_centroids,['benin', 'burkina faso', 'gambia', 'ghana', 'guinea',
-                                                                            'liberia','mali', 'niger', 'nigeria', 'sierra leone',
-                                                                            'senegal', 'togo'], 37)
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra leone', 'togo'], 37)
 
     combined_first_stage_df.insert(loc=0, column='pow_year', value=np.array((list(range(1980,2017)) * 12))**2)
     combined_first_stage_df.insert(loc=0, column='year', value=np.array((list(range(1980,2017)) * 12)))
     combined_first_stage_df.insert(loc=0, column='centroid_lon', value = centroids_lon)
     combined_first_stage_df.insert(loc=0, column='centroid_lat', value = centroids_lat)
     combined_first_stage_df.insert(loc=0, column='country', value=[i for i in ['benin', 'burkina_faso', 'gambia', 'ghana', 'guinea',
-                                                                            'liberia','mali', 'niger', 'nigeria', 'sierra_leone',
-                                                                            'senegal', 'togo'] for _ in range(37)])
+                                                                         'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                                         'sierra_leone', 'togo'] for _ in range(37)])
     
     combined_first_stage_df_clean = combined_first_stage_df.copy().dropna(how='any')
 

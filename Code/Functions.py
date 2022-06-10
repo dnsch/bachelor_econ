@@ -6,8 +6,18 @@ import numpy as np
 import os
 import re
 #plots:
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+# import matplotlib.patches as mpatches
 from matplotlib.patches import Patch,Rectangle
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.colors as colors
+import shapely
+import shapely.speedups as speedy
+speedy.disable()
+from mpl_toolkits.basemap import Basemap
+import matplotlib.cm as cm
+from matplotlib.legend_handler import HandlerPatch
 import cartopy
 import cartopy.feature as cf
 import cartopy.crs as ccrs
@@ -347,7 +357,7 @@ def process_outcome_data():
 
     #create times and countries of interest
     columns_years =  list(range(1979, 2018))
-    countries = ['Benin', 'Burkina Faso', 'Gambia', 'Ghana', 'Guinea', 'Liberia', 'Mali', 'Niger', 'Nigeria', 'Sierra Leone', 'Senegal', 'Togo']
+    countries = ['Benin', 'Burkina Faso', 'Gambia', 'Ghana', 'Guinea', 'Liberia', 'Mali', 'Niger', 'Nigeria', 'Senegal', 'Sierra Leone','Togo']
 
 
     #Maddison Project Database(in constant 2011 USD):
@@ -409,7 +419,7 @@ def process_outcome_data():
     file_pwt = parent_directory + '\\raw_data\\2.2_outcome_data\\penn_world_tables\\FebPwtExport2232022.csv'
 
     #country codes in pwt dataset
-    country_codes = ['BEN', 'BFA', 'GMB', 'GHA', 'GIN', 'LBR', 'MLI', 'NER', 'NGA', 'SLE', 'SEN', 'TGO']
+    country_codes = ['BEN', 'BFA', 'GMB', 'GHA', 'GIN', 'LBR', 'MLI', 'NER', 'NGA', 'SEN', 'SLE', 'TGO']
 
     #create pwt data frame that will be plotted later
     df_pwt = pd.DataFrame(columns = columns_years)
@@ -475,12 +485,15 @@ def process_outcome_data():
     df_wbdi = df_wbdi.replace('..', np.nan)
 
     # change dtypes to numeric
-    df_wbdi[["1980","1981","1982","1983","1984","1985","1986","1987","1988","1989",
-         "1990","1991","1992","1993","1994","1995","1996","1997","1998","1999",]] = df_wbdi[["1980","1981","1982","1983","1984","1985","1986","1987","1988","1989",
+    df_wbdi[["1979","1980","1981","1982","1983","1984","1985","1986","1987","1988","1989",
+         "1990","1991","1992","1993","1994","1995","1996","1997","1998","1999",]] = df_wbdi[["1979","1980","1981","1982","1983","1984","1985","1986","1987","1988","1989",
                                                                                         "1990","1991","1992","1993","1994","1995","1996","1997","1998","1999",]].apply(pd.to_numeric)
 
     #multiply by inflator to 2017 USD
     df_wbdi[df_wbdi.select_dtypes(include=['float64']).columns] *= 1.04
+
+    #reindex, bc wbdi country order is different
+    df_wbdi = df_wbdi.reindex([0,1,2,3,4,5,6,7,8,10,9,11])
 
     #create residualized log dataframe
     df_wbdi_resid_log = pd.DataFrame(columns = columns_years)
@@ -517,7 +530,10 @@ def process_outcome_data():
                                                                                                             "1990","1991","1992","1993","1994","1995","1996","1997","1998","1999",]].apply(pd.to_numeric)
 
     #multiply by inflator to 2017 USD
-    df_wbdi[df_wbdi.select_dtypes(include=['float64']).columns] *= 1.04
+    df_wbdi_per_cap[df_wbdi_per_cap.select_dtypes(include=['float64']).columns] *= 1.04
+
+    #reindex, bc wbdi country order is different
+    df_wbdi_per_cap = df_wbdi_per_cap.reindex([0,1,2,3,4,5,6,7,8,10,9,11])
 
     df_wbdi_pop = pd.DataFrame(columns = columns_years)
     df_wbdi_pop.insert (0, "country", countries)
@@ -560,7 +576,6 @@ def process_outcome_data():
     df_mpd_per_cap_growth = df_mpd_per_cap_growth.drop(1979, 1)
 
     return [df_pwt, df_pwt_growth, df_pwt_per_cap, df_pwt_growth_per_cap, df_wbdi, df_wbdi_per_cap, df_wbdi_pop, df_wbdi_growth, df_wbdi_per_cap_growth, df_mpd, df_mpd_growth, df_mpd_pop, df_mpd_per_cap, df_mpd_per_cap_growth]
-
 
 ######################################################################
 
@@ -818,12 +833,14 @@ def plot_grid(lats, lons, title='', extent=[-150, 150, -90, 90], borders = False
     ax.text(-0.06, 0.55, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=14)
     ax.text(0.5, -0.1, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
 
-    handles = [
-        Patch(facecolor=color, label=label) 
-        for label, color in zip(country_names, color_list)
-    ]
+    if add_countries:
 
-    ax.legend(handles=handles)
+        handles = [
+            Patch(facecolor=color, label=label) 
+            for label, color in zip(country_names, color_list)
+        ]
+
+        ax.legend(handles=handles)
 
     #plot+info
     #plt.contourf(lons, lats, data, transform=ccrs.PlateCarree(),cmap='YlOrRd')
@@ -933,33 +950,6 @@ def plot_grid2(lats, lons, title='', extent=[-150, 150, -90, 90], figsize = (32,
     ax2.set_extent(extent, crs=ccrs.PlateCarree())
 
     if add_source_region[1]:
-        # #34
-        # #∼ 21°N, 16°W
-        # add_pixel(ax,21,22,-16,-17)
-        # #∼26°–27°N, 6° –7°W
-        # add_pixel(ax,26,27,-6,-7)
-        # #35
-        # #∼17°– 18°N, 8°–10°W
-        # add_pixel(ax,17,18,-8,-10)
-        # #∼ 16°N, 3°–4°W
-        # add_pixel(ax,16,17,-3,-4)
-        # #18° and 20°N and 3° and 8°W
-        # add_pixel(ax,18,20,-3,-8)
-        # #36
-        # #26°N, 1°E
-        # add_pixel(ax,26,27,1,2)
-        # #37
-        # #lies between 18° and 23°N, 3° and 6°E
-        # add_pixel(ax,18,23,3,6)
-        # #39
-        # #lies between 16° and 18°N and extends from 15° to 19°E
-        # add_pixel(ax,16,18,15,19)
-        # #centered at ∼17.5°N between 12° and 14°E
-        # add_pixel(ax,17.5, 18.5, 12,14)
-        # #ax.add_patch(Rectangle((15.5,16.05), (18.05-15.5), (17.38-16.05),color = 'black',fill=True))
-
-
-        #merra spatial resolution: 0.5 ° x 0.5 °
         
         #upper left:
         for pixel in return_region_pixel_array(region_name = 'upper_left'):
@@ -1077,7 +1067,7 @@ def barplot(data, columns, titles = '', xlabels='', ylabels='', bar_colors = ['#
 
 def plot_outcome_data(pwt_data, mpd_data, wbdi_data,
                       xlim = [1980, 2020], xticks = [1980,1990,2000,2010,2020],
-                      xlabel = 'Year', ylabel = 'Log differences (GDP)', title = '', figsize = (16,8)):
+                      xlabel = 'Year', ylabel = 'GDP Growth in %', title = '', figsize = (16,8)):
 
     pwt_data[pwt_data.select_dtypes(include=['float64']).columns]*=100
     mpd_data[mpd_data.select_dtypes(include=['float64']).columns]*=100
@@ -1246,6 +1236,76 @@ def plot_wind_vectorfield2(x_winds, y_winds, lons_wind, lats_wind, fig_size = (1
 
     plt.show()
 
+
+
+def plot_centroids(population_data, countries_list = ['benin', 'burkina faso', 'gambia', 'ghana', 'guinea',
+                                                      'liberia','mali', 'niger', 'nigeria', 'senegal',
+                                                      'sierra leone', 'togo'],
+                   country_names = ['Benin', 'Burkina Faso', 'Gambia', 'Ghana', 'Guinea',
+                                    'Liberia','Mali', 'Niger', 'Nigeria', 'Senegal',
+                                    'Sierra Leone', 'Togo'],
+                   color_list = ['black', 'grey', 'deepskyblue', 'aquamarine', 'violet',
+                                 'orange', 'royalblue', 'darkgoldenrod', 'yellow', 'indigo',
+                                 'red', 'lightpink'],
+                   title='', color = 'indianred', extent=[-150, 150, -90, 90], borders = False, plot_grid_lines = True):
+
+    fig = plt.figure(figsize=(16,8))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.set_extent(extent, crs=ccrs.PlateCarree())
+    
+    #additional geographical information
+    ax.coastlines(resolution="50m",linewidth=1)
+    if(borders):
+        ax.add_feature(cf.BORDERS)
+    #gridlines
+
+    if plot_grid_lines:
+        gl = ax.gridlines(linestyle='--',color='black', draw_labels=True)
+    else:
+        gl = ax.gridlines(linestyle='--',color='black', draw_labels=True, alpha=0)
+    gl.top_labels = False
+    gl.right_labels = False
+    gl.xlabel_style = {'size': 12}
+    gl.ylabel_style = {'size': 12}
+    #axis labeling
+    ax.text(-0.06, 0.55, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=14)
+    ax.text(0.5, -0.1, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
+
+    for idx,country in enumerate(countries_list):
+        latitude = population_data.iloc[:,1].loc[population_data['name'] == str(country).title()].values[0]
+        longitude = population_data.iloc[:,2].loc[population_data['name'] == str(country).title()].values[0]
+
+        ax.add_patch(plt.Circle((longitude, latitude), .2, facecolor=color_list[idx], alpha = 1, edgecolor='black', linewidth=.5))
+
+    class HandlerEllipse(HandlerPatch):
+        def create_artists(self, legend, orig_handle,
+                        xdescent, ydescent, width, height, fontsize, trans):
+            center = 0.5 * width - 0.5 * xdescent, 0.5 * height - 0.5 * ydescent
+            p = mpatches.Ellipse(xy=center, width=height + xdescent,
+                                height=height + ydescent)
+            self.update_prop(p, orig_handle, legend)
+            p.set_transform(trans)
+            return [p]
+
+    handles = [
+        # Patch(facecolor=color, label=label)
+        # Line2D([0], [0], marker='o', color=color, label=label,
+        # #                 markerfacecolor=color, markersize=15)
+        # Circle((0,0), color=color, label=label)
+        # plt.plot("ro", markersize=15, label=label, facecolor=color)
+        mpatches.Circle((0.5, 0.5), 0.25, facecolor=color,
+                    edgecolor='black', linewidth=1, label=label)
+        for label, color in zip(country_names, color_list)
+    ]
+
+    ax.legend(handles=handles, prop={'size': 12}, handler_map={mpatches.Circle: HandlerEllipse()})
+    
+    #plot+info
+    #plt.contourf(lons, lats, data, transform=ccrs.PlateCarree(),cmap='YlOrRd')
+    plt.title(f'{title}', size=14, pad=15, weight='bold')
+    plt.xlabel('Latitude')
+    plt.show()
+
 def plot_gpw_data(population_array, lats, lons, extent=[-30,29,-15,29], borders = True, cbar_min = 0, cbar_max = 1000000, unit = 1,
                   population_data =[], title='', figsize = (16,8), shrink=1, labelsize=12, lat_space = -0.07, cmap = cmocean.tools.lighten(cmo.matter, 0.85)):
 
@@ -1295,6 +1355,204 @@ def plot_gpw_data(population_array, lats, lons, extent=[-30,29,-15,29], borders 
     cb.ax.set_yticklabels(['no data', '0.2', '0.4', '0.6', '0.8',r'$\geq 1$']) 
     cb.ax.tick_params(labelsize=12)
     #plt.title(f'{title}', size=14, pad=15, weight='bold') 
+
+
+#marisanos and cyangs answer from:
+#https://stackoverflow.com/questions/18602660/matplotlib-bar3d-clipping-problems
+#modified
+def plot_barchart3d(data1, data2, lons_onedim, lats_onedim, title_1 = '', title_2 = '', Opacity = 1, title_size=20, value_size=18, xpad = 10, ypad = 10, zpad=5):
+
+    def sph2cart(r, theta, phi):
+        '''spherical to cartesian transformation.'''
+        x = r * np.sin(theta) * np.cos(phi)
+        y = r * np.sin(theta) * np.sin(phi)
+        z = r * np.cos(theta)
+        return x, y, z
+
+    def sphview(ax):
+        '''returns the camera position for 3D axes in spherical coordinates'''
+        r = np.square(np.max([ax.get_xlim(), ax.get_ylim()], 1)).sum()
+        theta, phi = np.radians((90-ax.elev, ax.azim))
+        return r, theta, phi
+
+    def ravzip(*itr):
+        '''flatten and zip arrays'''
+        return zip(*map(np.ravel, itr))
+
+    fig, (ax,ax2) = plt.subplots(1,2, figsize = (32,16), dpi=300,subplot_kw=dict(projection='3d'))
+
+    dat = data1
+
+    lx = 105
+    ly = 91
+    n = lx*ly
+    xpos = np.arange(0,lx,1)  
+    ypos = np.arange(0,ly,1)
+    xpos, ypos = np.meshgrid(xpos+0.5, ypos+0.5)
+    xpos = xpos.flatten()
+    ypos = ypos.flatten()
+    zpos = np.zeros(n,dtype=object)
+    dx = .625*np.ones_like(zpos)
+    dy = .5*np.ones_like(zpos)
+    dz = dat.flatten()
+    cc = np.tile(range(lx), (ly,1))
+    cc = cc.T.flatten()
+
+
+    opacity = Opacity
+
+    #Draw the earth map using Basemap
+    # Define lower left, uperright lontitude and lattitude respectively
+    extent = [-30,35.5,-15,30.5]
+    # Create a basemap instance that draws the Earth layer
+    bm = Basemap(llcrnrlon=extent[0], llcrnrlat=extent[2],
+                urcrnrlon=extent[1], urcrnrlat=extent[3],
+                projection='cyl', resolution='l', fix_aspect=False, ax=ax)
+
+    # Add Basemap to the figure
+    ax.add_collection3d(bm.drawcoastlines(linewidth=0.35,))
+    ax.add_collection3d(bm.drawcountries(linewidth=0.55))
+    # ax.view_init(azim=300, elev=50)
+    ttl1 = ax.set_title(f'{title_1}', size=title_size, weight='bold')
+    ttl1.set_position([.5, 1.05])
+    ax.set_xlabel('Longitude', labelpad=35, size = title_size)
+    ax.set_ylabel('Latitude', labelpad=40, size = title_size)
+    ax.set_zlabel('Real Observed Dust', labelpad=35, size = title_size)
+
+    x1, y1, z1 = sph2cart(*sphview(ax))
+    camera = np.array((x1,y1,0))
+
+    z_order = (np.array([xpos*camera[0],ypos*camera[1], np.zeros_like(xpos)*camera[2]])).sum(0)
+
+    z_data1 = data2.flatten()
+
+    z_data = dat.flatten()
+
+    offset = z_data + np.abs(min(z_data))
+    offset_max = z_data1 + np.abs(min(z_data1))
+    fracs = offset.astype(float)/offset.max()
+    fracs_max = offset_max.astype(float)/offset.max()
+    norm = colors.Normalize(fracs.min(), fracs_max.max())
+    cmap = cm.get_cmap("YlOrRd")
+    color_values = cmap(norm(fracs.tolist()))
+
+
+    for i in range(n):
+        pl = ax.bar3d(lons_onedim[i], lats_onedim[i], zpos[i], dx[i], dy[i], dz[i],
+                color=color_values[i], alpha=opacity, zsort='max')
+        pl._sort_zpos = z_order[i]
+
+
+    plt.autoscale(enable=True, axis='both', tight=True)
+
+
+    #################################################################
+
+
+    dat = data2
+
+    lx = 105
+    ly = 91
+    n = lx*ly
+    xpos = np.arange(0,lx,1)  
+    ypos = np.arange(0,ly,1)
+    xpos, ypos = np.meshgrid(xpos+0.5, ypos+0.5)
+    xpos = xpos.flatten()
+    ypos = ypos.flatten()
+    zpos = np.zeros(n,dtype=object)
+    dx = .625*np.ones_like(zpos)
+    dy = .5*np.ones_like(zpos)
+    dz = dat.flatten()
+    cc = np.tile(range(lx), (ly,1))
+    cc = cc.T.flatten()
+
+
+    bm2 = Basemap(llcrnrlon=extent[0], llcrnrlat=extent[2],
+                urcrnrlon=extent[1], urcrnrlat=extent[3],
+                projection='cyl', resolution='l', fix_aspect=False, ax=ax2)
+
+
+    # Add Basemap to the figure
+    ax2.add_collection3d(bm2.drawcoastlines(linewidth=0.35))
+    ax2.add_collection3d(bm2.drawcountries(linewidth=0.55))
+
+    # ax.view_init(azim=300, elev=50)
+    ttl2 = ax2.set_title(title_2, size=title_size, weight='bold')
+    # ttl2.set_position([.5, .8])
+    ttl2.set_verticalalignment = 'top'
+
+    # plt.text(0.5, 1.08, title_2,
+    #      horizontalalignment='center',
+    #      fontsize=title_size,
+    #      transform = ax2.transAxes)
+
+    ax2.set_xlabel('Longitude', labelpad=35, size= title_size)
+    ax2.set_ylabel('Latitude', labelpad=40, size= title_size)
+    ax2.set_zlabel('Simulated Dust', labelpad=35, size= title_size)
+
+
+
+    x1, y1, z1 = sph2cart(*sphview(ax2))
+    camera = np.array((x1,y1,0))
+
+    z_order = (np.array([xpos*camera[0],ypos*camera[1], np.zeros_like(xpos)*camera[2]])).sum(0)
+
+    z_data = dat.flatten()
+
+    offset = z_data + np.abs(min(z_data))
+    fracs = offset.astype(float)/offset.max()
+    norm = colors.Normalize(fracs.min(), fracs.max())
+    cmap = cm.get_cmap("YlOrRd")
+    color_values = cmap(norm(fracs.tolist()))
+
+
+    for i in range(n):
+        pl = ax2.bar3d(lons_onedim[i], lats_onedim[i], zpos[i], dx[i], dy[i], dz[i],
+                color=color_values[i], alpha=opacity, zsort='max', cmap='YlOrRd')
+        pl._sort_zpos = z_order[i]
+
+    ax.set_xticks([-20,-10,0,10,20,30]) 
+    ax.set_xticklabels(["20° W", "10° W", "0°", "10° E", "20° E", "30°E"])
+    ax.set_yticks([-10,0,10,20]) 
+    ax.set_yticklabels(["10° S", "0°", "10° N", "20° N"])
+
+    ax.tick_params(axis='x', pad=xpad)
+    ax.tick_params(axis='y', pad=ypad)
+    ax.tick_params(axis='z', pad=zpad)
+    ax.tick_params(labelsize=value_size)
+
+    ax2.set_xticks([-20,-10,0,10,20,30]) 
+    ax2.set_xticklabels(["20° W", "10° W", "0°", "10° E", "20° E", "30°E"])
+    ax2.set_yticks([-10,0,10,20]) 
+    ax2.set_yticklabels(["10° S", "0°", "10° N", "20° N"])
+
+    ax2.tick_params(axis='x', pad=xpad)
+    ax2.tick_params(axis='y', pad=ypad)
+    ax2.tick_params(axis='z', pad=zpad)
+    ax2.tick_params(labelsize=value_size)
+
+    ax.set_zlim(0,4)
+    ax2.set_zlim(0,4)
+
+
+    plt.grid(True, linestyle='-', color='r', zorder=10)
+
+
+
+    norm = mpl.colors.Normalize(vmin=0,vmax=4)
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cb = plt.colorbar(sm, ax = [ax,ax2], pad=.04, aspect=16, shrink=0.8, ticks=[0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0], anchor = (1.6,.5))
+    cb.ax.yaxis.set_tick_params(pad=10)
+
+    cb.set_label(r'$\frac{kg}{m^3}$',size=value_size+8,labelpad=45, rotation='horizontal')
+    cb.ax.tick_params(labelsize=value_size)
+    cb.ax.yaxis.offsetText.set_fontsize(12)
+    cb.ax.text(-0.25, 4.1, '1e-7', va='bottom', ha='left', size=value_size)
+
+    plt.subplots_adjust(wspace=0.08)
+
+    plt.show()
 
 
 def plot_ols_data(real_data, predicted_values, y_name= '', x_name = '', title=f'', fig_size=(16,8)):
@@ -2182,17 +2440,6 @@ def return_region_pixel_array(region_name = ''):
                                    [57,55],[57,56],[57,57],[57,58],[57,69],[57,70]], dtype = 'int')
         return nigeria_pixels
 
-    # Sierra Leone:
-    elif (region_name == 'sierra_leone'):
-        sierra_leone_pixels = np.array([[44,29],[44,30],
-                                        [45,27],[45,28],[45,29],[45,30],[45,31],
-                                        [46,28],[46,29],[46,30],[46,31],
-                                        [47,27],[47,28],[47,29],[47,30],[47,31],
-                                        [48,27],[48,28],[48,29],[48,30],[48,31],
-                                        [49,28],[49,29],[49,30],[49,31],
-                                        [50,29],[50,30]], dtype = 'int')
-        return sierra_leone_pixels
-
     # Senegal:
     elif (region_name == 'senegal'):
         senegal_pixels = np.array([[55,21],[55,22],[55,23],[55,28],[55,29],
@@ -2205,6 +2452,17 @@ def return_region_pixel_array(region_name = ''):
                                    [62,22],[62,23],[62,24],[62,25],[62,26],
                                    [63,22],[63,23],[63,24],[63,25]], dtype = 'int')
         return senegal_pixels
+
+    # Sierra Leone:
+    elif (region_name == 'sierra_leone'):
+        sierra_leone_pixels = np.array([[44,29],[44,30],
+                                        [45,27],[45,28],[45,29],[45,30],[45,31],
+                                        [46,28],[46,29],[46,30],[46,31],
+                                        [47,27],[47,28],[47,29],[47,30],[47,31],
+                                        [48,27],[48,28],[48,29],[48,30],[48,31],
+                                        [49,28],[49,29],[49,30],[49,31],
+                                        [50,29],[50,30]], dtype = 'int')
+        return sierra_leone_pixels
 
     # Togo:
     elif (region_name == 'togo'):

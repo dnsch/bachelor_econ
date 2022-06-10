@@ -3,8 +3,11 @@ import pickle
 import numpy as np
 import pandas as pd
 
+os.environ["PROJ_LIB"] = "C:\\Users\\Daniel\\anaconda3\\Library\\share"; #fixr
 
-from functions import extract_seasonal_data, hourly_data_to_daily_mean
+
+
+from functions import extract_seasonal_data, hourly_data_to_daily_mean, build_source_array
 from functions import advection_diffusion_fd
 
 from functions import simulation_comparison_animation
@@ -36,6 +39,17 @@ def main():
     west_africa_longitudes = np.load(parent_directory + '\\processed_data\\west_africa_longitudes.npy')
     west_africa_latitudes = np.load(parent_directory + '\\processed_data\\west_africa_latitudes.npy')   
     print('data loaded successfully')
+
+    print('extract t0 array ...')
+    dust_t0_array = build_source_array(dust_hourly_data, 91, 105)
+    dust_t0_array = dust_t0_array[0]
+    print('t0 array extracted successfully')
+
+    print('t0 array to \\processed_data ...')
+    with open(parent_directory + '\\processed_data\\dust_t0_array.npy', 'wb') as numpy_array:
+        np.save(numpy_array, dust_t0_array)
+    del dust_t0_array
+    print('saved t0 array to \\processed_data')
 
     print('running dust advection diffusion simulation ...')
     #create and save simulation data
