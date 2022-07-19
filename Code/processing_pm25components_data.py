@@ -3,11 +3,16 @@ import pickle
 import numpy as np
 import pandas as pd
 
+os.environ["PROJ_LIB"] = "C:\\Users\\Daniel\\anaconda3\\Library\\share"; #fixr
+
 
 from functions import process_merra_data, process_outcome_data, hourly_data_to_daily_mean, three_hourly_data_to_daily_mean, extract_seasonal_data
 from functions import three_hourly_data_to_daily_mean
 
 parent_directory = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+
+import warnings
+warnings.filterwarnings("ignore")
 
 def main():
 

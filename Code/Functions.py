@@ -8,7 +8,7 @@ import re
 #plots:
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-# import matplotlib.patches as mpatches
+import matplotlib.patches as mpatches
 from matplotlib.patches import Patch,Rectangle
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.colors as colors
@@ -598,7 +598,7 @@ def add_pixel2(ax,lat, lon, alpha=1, color='black', lw=1, linestyle='-', fill=Tr
 def plot_merra_data(data, lons, lats, title='', date='', data_value='', extent=[-150, 150, -90, 90],
                     borders = False, bodele = False, plot_grids = False, add_source_region = False,
                     add_bodele_source_exclusive = False, add_bodele_source_exclusive_alpha = 1, source_region_alpha = 1, source_region_lw = 0.2, source_region_fill = False,
-                    cbar_color = 'YlOrRd', cbar_min = 0, cbar_max = 7, unit = 1, shrink=0.8, ax_text_left = -0.05, ax_text_bottom=-0.1):
+                    cbar_color = 'YlOrRd', cbar_min = 0, cbar_max = 7, unit = 1, shrink=0.8, ax_text_left = -0.05, ax_text_bottom=-0.1, text_size=14, tick_size=12, labelsize= 10, rot=90, data_value_label = 15):
     #size, extent and cartopy projection
     fig = plt.figure(figsize=(16,8))
     ax = plt.axes(projection=ccrs.PlateCarree())
@@ -618,9 +618,11 @@ def plot_merra_data(data, lons, lats, title='', date='', data_value='', extent=[
     gl = ax.gridlines(linestyle='--',color='black', draw_labels=True)
     gl.top_labels = False
     gl.right_labels = False
+    gl.xlabel_style = {'size': labelsize}
+    gl.ylabel_style = {'size': labelsize}
     #axis labeling
-    ax.text(ax_text_left, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=14)
-    ax.text(0.5, ax_text_bottom, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
+    ax.text(ax_text_left, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=text_size)
+    ax.text(0.5, ax_text_bottom, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=text_size)
     #plot+info
     if plot_grids:
         plt.pcolormesh(lons, lats, data, transform=ccrs.PlateCarree(),cmap=cbar_color)
@@ -649,24 +651,26 @@ def plot_merra_data(data, lons, lats, title='', date='', data_value='', extent=[
         quadmesh.set_clim(vmin=cbar_min, vmax=cbar_max * unit)
     else:
         plt.contourf(lons, lats, data, transform=ccrs.PlateCarree(),cmap=cbar_color)
-    plt.title(f'{title}{date}', size=14, pad=15, weight='bold')
+    plt.title(f'{title}{date}', size=text_size, pad=15, weight='bold')
     plt.xlabel('Latitude')
     #colorbar
     if plot_grids:
         cb = plt.colorbar(quadmesh, orientation="vertical", pad=0.02, aspect=16, shrink=shrink)
     else:
         cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=shrink)
-    cb.set_label(data_value,size=14,rotation=90,labelpad=15)
-    cb.ax.tick_params(labelsize=12)
-    cb.ax.yaxis.offsetText.set_fontsize(12)
+    cb.set_label(data_value,size=text_size+2,rotation=rot,labelpad=data_value_label)
+    cb.ax.tick_params(labelsize=tick_size)
+    cb.ax.yaxis.offsetText.set_fontsize(tick_size)
     plt.show()
 
 #for subplots with >1 col
 def plot_merra_data2(data, lons, lats, titles='', date='', data_values='', extent=[-150, 150, -90, 90],
                     borders = False, bodele = False, plot_grids = False, add_source_region = False,
-                    add_bodele_source_exclusive = False, add_bodele_source_exclusive_alpha = 1, source_region_alpha = 1, source_region_lw = 0.2, source_region_fill = False,
+                    add_bodele_source_exclusive = False, add_bodele_source_exclusive_alpha = 1, source_region_alpha = 1, source_region_color = 'black', source_region_lw = 0.2, source_region_fill = False,
                     cbar_color = 'YlOrRd', cbar_min = 0, cbar_max = 7, unit = 1, figsize = (16,8),
-                    rows = 1, columns = 1, shrink=1, labelsize=12, lat_space = -0.07, unit_text='l'):
+                    rows = 1, columns = 1, shrink=1, labelsize=12, unit_text='l', text_size=35, value_size =30,
+                    scientific_y=[2.2,3.2], lat_space = [-.15, -.15], lon_space = [-0.12,-0.12], rotation=0, cbar_labelpad=45,
+                    scientific_unit = '1e-7', w_space = .22, cb_frac = True, scientific = True, one_scientific = False):
     #size, extent and cartopy projection
     # fig = plt.figure(figsize=(16,8))
     # ax = plt.axes(projection=ccrs.PlateCarree())
@@ -696,31 +700,31 @@ def plot_merra_data2(data, lons, lats, titles='', date='', data_values='', exten
         gl = axes[i].gridlines(linestyle='--',color='black', draw_labels=True)
         gl.top_labels = False
         gl.right_labels = False
-        gl.xlabel_style = {'size': 12}
-        gl.ylabel_style = {'size': 12}
+        gl.xlabel_style = {'size': value_size}
+        gl.ylabel_style = {'size': value_size}
         #axis labeling
-        axes[i].text(-0.06, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=axes[i].transAxes, size=14)
-        axes[i].text(0.5, lat_space, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=axes[i].transAxes, size=14)
+        axes[i].text(lat_space[i], 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=axes[i].transAxes, size=text_size)
+        axes[i].text(0.5, lon_space[i], 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=axes[i].transAxes, size=text_size)
         #plot+info
 
         if add_source_region:
         
             for pixel in return_region_pixel_array(region_name = 'upper_left'):
-                add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+                add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
 
             #right
             for pixel in return_region_pixel_array(region_name = 'bodele'):
-                add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+                add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
 
             for pixel in return_region_pixel_array(region_name = 'upper_right'):
-                add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+                add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
             
             for pixel in return_region_pixel_array(region_name = 'upper_right_corner'):
-                add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+                add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
 
         if add_bodele_source_exclusive:
                 for pixel in return_region_pixel_array(region_name = 'bodele'):
-                    add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=add_bodele_source_exclusive_alpha, lw=.2, linestyle='solid', fill=False)
+                    add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=add_bodele_source_exclusive_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
 
         if plot_grids:
             qaudmesh[i] = axes[i].pcolormesh(lons, lats, data[i], transform=ccrs.PlateCarree(),cmap=cbar_color[i])
@@ -728,20 +732,29 @@ def plot_merra_data2(data, lons, lats, titles='', date='', data_values='', exten
         else:
             contourf[i] = axes[i].contourf(lons, lats, data[i], transform=ccrs.PlateCarree(),cmap=cbar_color[i])
         # plt.title(f'{title}{date}', size=14, pad=15, weight='bold')
-        axes[i].set_title(f'{titles[i]}{date[i]}', size=14, pad=15, weight='bold')
+        axes[i].set_title(f'{titles[i]}{date[i]}', size=text_size, pad=15, weight='bold')
         plt.xlabel('Latitude')
 
         #colorbar
         if plot_grids:
-            cb[i] = fig.colorbar(qaudmesh[i], orientation="vertical", pad=0.02, aspect=16, shrink=shrink, ax=axes[i])
+            cb[i] = fig.colorbar(qaudmesh[i], orientation="vertical", pad=0.04, aspect=16, shrink=shrink, ax=axes[i])
         else:
-            cb[i] = fig.colorbar(contourf[i], orientation="vertical", pad=0.02, aspect=16, shrink=shrink, ax=axes[i])
-        cb[i].set_label(data_values[i],size=labelsize,rotation=90,labelpad=15)
-        cb[i].ax.tick_params(labelsize=12)
-        cb[i].ax.yaxis.offsetText.set_fontsize(12)
+            cb[i] = fig.colorbar(contourf[i], orientation="vertical", pad=0.04, aspect=16, shrink=shrink, ax=axes[i])
+        if cb_frac:
+            cb[i].set_label(data_values[i],size=value_size+8,rotation=rotation,labelpad=cbar_labelpad)
+        else:
+            cb[i].set_label(data_values[i],size=value_size,rotation=rotation,labelpad=cbar_labelpad)
+        cb[i].ax.tick_params(labelsize=value_size)
+        cb[i].ax.yaxis.offsetText.set_fontsize(value_size)
+        if scientific:
+            if plot_grids:
+                if one_scientific:
+                    if i==1:
+                        cb[1].ax.text(-0.25, scientific_y[1], scientific_unit, va='bottom', ha='left', size=value_size)
+                else:
+                    cb[i].ax.text(-0.25, scientific_y[i], scientific_unit, va='bottom', ha='left', size=value_size)
 
-        plt.subplots_adjust(wspace=0.08)
-
+        plt.subplots_adjust(wspace=w_space)
 
 
 def plot_grid(lats, lons, title='', extent=[-150, 150, -90, 90], borders = False, add_source_region = False,
@@ -827,11 +840,11 @@ def plot_grid(lats, lons, title='', extent=[-150, 150, -90, 90], borders = False
         gl = ax.gridlines(linestyle='--',color='black', draw_labels=True, alpha=0)
     gl.top_labels = False
     gl.right_labels = False
-    gl.xlabel_style = {'size': 12}
-    gl.ylabel_style = {'size': 12}
+    gl.xlabel_style = {'size': 20}
+    gl.ylabel_style = {'size': 20}
     #axis labeling
-    ax.text(-0.06, 0.55, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=14)
-    ax.text(0.5, -0.1, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
+    ax.text(-0.08, 0.55, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=22)
+    ax.text(0.5, -0.1, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=22)
 
     if add_countries:
 
@@ -844,13 +857,14 @@ def plot_grid(lats, lons, title='', extent=[-150, 150, -90, 90], borders = False
 
     #plot+info
     #plt.contourf(lons, lats, data, transform=ccrs.PlateCarree(),cmap='YlOrRd')
-    plt.title(f'{title}', size=14, pad=15, weight='bold')
+    plt.title(f'{title}', size=22, pad=15, weight='bold')
     plt.xlabel('Latitude')
     plt.show()
 
 def plot_grid2(lats, lons, title='', extent=[-150, 150, -90, 90], figsize = (32,16), rows = 1, columns = 2, first=[True, False],
-              borders = False, add_source_region = False, latspace = [-0.07,-0.07],
-              plot_lines = True, plot_grid_lines = True, add_countries = False, country_list = '', color_list = '', country_alpha = 1, country_names = ''):
+              borders = False, add_source_region = False, latspace = [-.13,-.13],
+              plot_lines = True, plot_grid_lines = True, add_countries = False, country_list = '', color_list = '',
+              country_alpha = 1, country_names = '', value_size = 30, text_size = 36):
 
     fig, (ax1,ax2) = plt.subplots(rows,columns, figsize=figsize, subplot_kw={"projection": ccrs.PlateCarree()})
 
@@ -902,16 +916,8 @@ def plot_grid2(lats, lons, title='', extent=[-150, 150, -90, 90], figsize = (32,
 
     if add_countries[0]:
         for idx,country in enumerate(country_list):
-            #draw them afterwards
-            if (country == 'benin' or country == 'gambia'):
-                continue
-            else:
-                for pixel in return_region_pixel_array(region_name = country):
-                    add_pixel2(ax1,lons[pixel[1]], lats[pixel[0]], alpha=country_alpha, color=color_list[idx])
-        for pixel in return_region_pixel_array(region_name = 'benin'):
-            add_pixel2(ax1,lons[pixel[1]], lats[pixel[0]], alpha=country_alpha, color='black')
-        for pixel in return_region_pixel_array(region_name = 'gambia'):
-            add_pixel2(ax1,lons[pixel[1]], lats[pixel[0]], alpha=country_alpha, color='deepskyblue')
+            for pixel in return_region_pixel_array(region_name = country):
+                add_pixel2(ax1,lons[pixel[1]], lats[pixel[0]], alpha=country_alpha, color=color_list[idx])
 
     if plot_lines[0]:
 
@@ -933,17 +939,17 @@ def plot_grid2(lats, lons, title='', extent=[-150, 150, -90, 90], figsize = (32,
         gl = ax1.gridlines(linestyle='--',color='black', draw_labels=True, alpha=0)
     gl.top_labels = False
     gl.right_labels = False
-    gl.xlabel_style = {'size': 12}
-    gl.ylabel_style = {'size': 12}
+    gl.xlabel_style = {'size': value_size}
+    gl.ylabel_style = {'size': value_size}
     #axis labeling
-    ax1.text(-0.06, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax1.transAxes, size=14)
-    ax1.text(0.5, latspace[0], 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax1.transAxes, size=14)
+    ax1.text(-0.1, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax1.transAxes, size=text_size)
+    ax1.text(0.5, latspace[0], 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax1.transAxes, size=text_size)
 
     
 
     #plot+info
     #plt.contourf(lons, lats, data, transform=ccrs.PlateCarree(),cmap='YlOrRd')
-    ax1.set_title(f'{title[0]}', size=14, pad=15, weight='bold')   
+    ax1.set_title(f'{title[0]}', size=text_size, pad=15, weight='bold')   
     plt.xlabel('Latitude')
 
     ax2 = plt.subplot(1,2,2, projection=ccrs.PlateCarree())
@@ -967,16 +973,8 @@ def plot_grid2(lats, lons, title='', extent=[-150, 150, -90, 90], figsize = (32,
 
     if add_countries[1]:
         for idx,country in enumerate(country_list):
-            #draw them afterwards
-            if (country == 'benin' or country == 'gambia'):
-                continue
-            else:
-                for pixel in return_region_pixel_array(region_name = country):
-                    add_pixel2(ax2,lons[pixel[1]], lats[pixel[0]], alpha=country_alpha, color=color_list[idx])
-        for pixel in return_region_pixel_array(region_name = 'benin'):
-            add_pixel2(ax2,lons[pixel[1]], lats[pixel[0]], alpha=country_alpha, color='black')
-        for pixel in return_region_pixel_array(region_name = 'gambia'):
-            add_pixel2(ax2,lons[pixel[1]], lats[pixel[0]], alpha=country_alpha, color='deepskyblue')
+            for pixel in return_region_pixel_array(region_name = country):
+                add_pixel2(ax2,lons[pixel[1]], lats[pixel[0]], alpha=country_alpha, color=color_list[idx])
 
     if plot_lines[1]:
 
@@ -998,23 +996,26 @@ def plot_grid2(lats, lons, title='', extent=[-150, 150, -90, 90], figsize = (32,
         gl = ax2.gridlines(linestyle='--',color='black', draw_labels=True, alpha=0)
     gl.top_labels = False
     gl.right_labels = False
-    gl.xlabel_style = {'size': 12}
-    gl.ylabel_style = {'size': 12}
+    gl.xlabel_style = {'size': value_size}
+    gl.ylabel_style = {'size': value_size}
     #axis labeling
-    ax2.text(-0.06, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax2.transAxes, size=14)
-    ax2.text(0.5, latspace[1], 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax2.transAxes, size=14)
+    ax2.text(-0.1, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax2.transAxes, size=text_size)
+    ax2.text(0.5, latspace[1], 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax2.transAxes, size=text_size)
 
-    ax2.set_title(f'{title[1]}', size=14, pad=15, weight='bold')
+    ax2.set_title(f'{title[1]}', size=text_size, pad=15, weight='bold')
 
     handles = [
         Patch(facecolor=color, label=label) 
         for label, color in zip(country_names, color_list)
     ]
 
-    ax2.legend(handles=handles, prop={'size': 12})
+    ax2.legend(handles=handles, prop={'size': 20})
     plt.show()
 
-def barplot(data, columns, titles = '', xlabels='', ylabels='', bar_colors = ['#76d7c3', '#f0b27a', '#84929e', '#f7dc6f', '#85c1e9'], figsize = (16,9)):
+
+def barplot(data, columns, titles = '', xlabels='', ylabels='',
+            bar_colors = ['#76d7c3', '#f0b27a', '#84929e', '#f7dc6f', '#85c1e9'],
+            figsize = (16,9), text_size = 35, value_size = 30, ylabelpad = 15, title_pad = 15):
   fig, ax = plt.subplots(1, ncols=columns, figsize = figsize)
 
   baro = dict()
@@ -1030,6 +1031,7 @@ def barplot(data, columns, titles = '', xlabels='', ylabels='', bar_colors = ['#
         tick_label=data[idx].index, 
         color = bar_colors
     )
+
 
     # Axis formatting.
     ax[idx].spines['top'].set_visible(False)
@@ -1050,20 +1052,24 @@ def barplot(data, columns, titles = '', xlabels='', ylabels='', bar_colors = ['#
           str(round(bar.get_height(), 1))+'%',
           horizontalalignment='center',
           color=bar_colors[bar_idx],
-          weight='bold'
+          weight='bold',
+          size = value_size-6
       )
 
     ax[idx].set_ylim([0,100])
 
     # Add labels and a title.
     if(idx is 0):
-      ax[idx].set_ylabel(ylabels[idx], labelpad=15, color='#333333', fontsize=10, weight='bold')
+      ax[idx].set_ylabel(ylabels[idx], labelpad=ylabelpad, color='#333333', fontsize=text_size, weight='bold')
     # ax[idx].set_xlabel(xlabels[idx], labelpad=15, color='#333333')
-    ax[idx].set_title(titles[idx], pad=15, color='#333333',
-                weight='bold')
+    ax[idx].set_title(titles[idx], pad=title_pad, color='#333333',
+                weight='bold', size = text_size)
+
+    ax[idx].tick_params(labelsize=value_size)
 
   fig.tight_layout()
 
+  plt.subplots_adjust(wspace=0.3)
 
 def plot_outcome_data(pwt_data, mpd_data, wbdi_data,
                       xlim = [1980, 2020], xticks = [1980,1990,2000,2010,2020],
@@ -1100,12 +1106,12 @@ def plot_outcome_data(pwt_data, mpd_data, wbdi_data,
             #set x and y axis aspect ratio
             col.set_aspect('auto')
             #set titles and labels
-            col.set_title(pwt_data['country'][idx], fontsize=9)
-            col.set_xlabel(xlabel, fontsize=8)
-            col.set_ylabel(ylabel, fontsize=8)
+            col.set_title(pwt_data['country'][idx], fontsize=14)
+            col.set_xlabel(xlabel, fontsize=12)
+            col.set_ylabel(ylabel, fontsize=12)
             #set tick label sizes
-            col.tick_params(axis='both', which='minor', labelsize=7)
-            col.tick_params(axis='both', which='major', labelsize=7)
+            col.tick_params(axis='both', which='minor', labelsize=10)
+            col.tick_params(axis='both', which='major', labelsize=10)
             #set grid
             col.grid(linestyle=':', linewidth='0.5')
             #remove upper and right bounding lines
@@ -1140,23 +1146,23 @@ def plot_wind_vectorfield(x_winds, y_winds, lons_wind, lats_wind, fig_size = (16
     gl = ax.gridlines(linestyle='--',color='black', draw_labels=True)
     gl.top_labels = False
     gl.right_labels = False
-    gl.xlabel_style = {'size': 12}
-    gl.ylabel_style = {'size': 12}
-    ax.text(-0.06, 0.5, 'Latitude', va='bottom', ha='center',
+    gl.xlabel_style = {'size': 18}
+    gl.ylabel_style = {'size': 18}
+    ax.text(-0.08, 0.5, 'Latitude', va='bottom', ha='center',
             rotation='vertical', rotation_mode='anchor',
-            transform=ax.transAxes, size=14)
-    ax.text(0.5, -0.075, 'Longitude', va='bottom', ha='center',
+            transform=ax.transAxes, size=20)
+    ax.text(0.5, -0.1, 'Longitude', va='bottom', ha='center',
         rotation='horizontal', rotation_mode='anchor',
-        transform=ax.transAxes, size=14)
-    plt.title(f'{title}{date}', size=14, pad=15, weight='bold')
+        transform=ax.transAxes, size=20)
+    plt.title(f'{title}{date}', size=20, pad=15, weight='bold')
     plt.xlabel('Latitude')
     color = np.sqrt(np.power(x_winds, 2) + np.power(y_winds, 2))
     #color2 = np.arctan2(x_winds, y_winds)
 
     color_background = ax.imshow(color,interpolation=interpolation,extent = extent,aspect = 'auto')
     cb = plt.colorbar(color_background,pad=0.02, aspect=16, shrink=1)
-    cb.set_label(data_value,size=14,rotation=90,labelpad=15)
-    cb.ax.tick_params(labelsize=12)
+    cb.set_label(data_value,size=20+2,rotation=0,labelpad=20)
+    cb.ax.tick_params(labelsize=18)
     ax.quiver(lons_wind, lats_wind, x_winds, y_winds, transform=ccrs.PlateCarree(),color='indianred', width=.0016)
 
     plt.show()
@@ -1164,7 +1170,10 @@ def plot_wind_vectorfield(x_winds, y_winds, lons_wind, lats_wind, fig_size = (16
 #for subplot with 2 cols
 def plot_wind_vectorfield2(x_winds, y_winds, lons_wind, lats_wind, fig_size = (16,8),
                           title='', date='', data_value='', extent=[-150, 150, -90, 90],
-                          borders = False, bodele = False, interpolation = "None", x_winds2=0, y_winds2=0, shrink=1):
+                          borders = False, bodele = False, interpolation = "None",
+                          x_winds2=0, y_winds2=0, shrink=1,
+                          value_size = 30, text_size = 36, lat_space = -.12, lon_space=-.17,
+                          cbar_labelpad = 30):
 
     # fig = plt.figure(figsize=fig_size)
     fig, (ax, ax2) = plt.subplots(1,2, figsize=fig_size, subplot_kw={"projection": ccrs.PlateCarree()})
@@ -1181,23 +1190,23 @@ def plot_wind_vectorfield2(x_winds, y_winds, lons_wind, lats_wind, fig_size = (1
     gl = ax.gridlines(linestyle='--',color='black', draw_labels=True)
     gl.top_labels = False
     gl.right_labels = False
-    gl.xlabel_style = {'size': 12}
-    gl.ylabel_style = {'size': 12}
-    ax.text(-0.06, 0.5, 'Latitude', va='bottom', ha='center',
+    gl.xlabel_style = {'size': value_size}
+    gl.ylabel_style = {'size': value_size}
+    ax.text(lat_space, 0.5, 'Latitude', va='bottom', ha='center',
             rotation='vertical', rotation_mode='anchor',
-            transform=ax.transAxes, size=14)
-    ax.text(0.5, -0.075, 'Longitude', va='bottom', ha='center',
+            transform=ax.transAxes, size=text_size)
+    ax.text(0.5, lon_space, 'Longitude', va='bottom', ha='center',
         rotation='horizontal', rotation_mode='anchor',
-        transform=ax.transAxes, size=14)
-    ax.set_title(f'{title[0]}{date[0]}', size=14, pad=15, weight='bold')
+        transform=ax.transAxes, size=text_size)
+    ax.set_title(f'{title[0]}{date[0]}', size=text_size, pad=15, weight='bold')
     plt.xlabel('Latitude')
     color = np.sqrt(np.power(x_winds, 2) + np.power(y_winds, 2))
     #color2 = np.arctan2(x_winds, y_winds)
 
     color_background = ax.imshow(color,interpolation=interpolation,extent = extent,aspect = 'equal')
     cb = plt.colorbar(color_background,pad=0.02, aspect=16, shrink=shrink, ax=ax)
-    cb.set_label(data_value,size=14,rotation=90,labelpad=15)
-    cb.ax.tick_params(labelsize=12)
+    cb.set_label(data_value,size=value_size+8,rotation=0,labelpad=cbar_labelpad)
+    cb.ax.tick_params(labelsize=value_size)
     ax.quiver(lons_wind, lats_wind, x_winds, y_winds, transform=ccrs.PlateCarree(),color='indianred', width=.0016)
 
     # ax2 = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
@@ -1213,29 +1222,28 @@ def plot_wind_vectorfield2(x_winds, y_winds, lons_wind, lats_wind, fig_size = (1
     gl2 = ax2.gridlines(linestyle='--',color='black', draw_labels=True)
     gl2.top_labels = False
     gl2.right_labels = False
-    gl2.xlabel_style = {'size': 12}
-    gl2.ylabel_style = {'size': 12}
-    ax2.text(-0.06, 0.5, 'Latitude', va='bottom', ha='center',
+    gl2.xlabel_style = {'size': value_size}
+    gl2.ylabel_style = {'size': value_size}
+    ax2.text(lat_space, 0.5, 'Latitude', va='bottom', ha='center',
             rotation='vertical', rotation_mode='anchor',
-            transform=ax2.transAxes, size=14)
-    ax2.text(0.5, -0.075, 'Longitude', va='bottom', ha='center',
+            transform=ax2.transAxes, size=text_size)
+    ax2.text(0.5, lon_space, 'Longitude', va='bottom', ha='center',
         rotation='horizontal', rotation_mode='anchor',
-        transform=ax2.transAxes, size=14)
-    ax2.set_title(f'{title[1]}{date[1]}', size=14, pad=15, weight='bold')
+        transform=ax2.transAxes, size=text_size)
+    ax2.set_title(f'{title[1]}{date[1]}', size=text_size, pad=15, weight='bold')
     plt.xlabel('Latitude')
     color2 = np.sqrt(np.power(x_winds2, 2) + np.power(y_winds2, 2))
     #color2 = np.arctan2(x_winds, y_winds)
 
     color_background2 = ax2.imshow(color2,interpolation=interpolation,extent = extent,aspect = 'equal')
     cb2 = plt.colorbar(color_background2,pad=0.02, aspect=16, shrink=shrink, ax=ax2)
-    cb2.set_label(data_value,size=14,rotation=90,labelpad=15)
-    cb2.ax.tick_params(labelsize=12)
+    cb2.set_label(data_value,size=value_size+8,rotation=0,labelpad=cbar_labelpad)
+    cb2.ax.tick_params(labelsize=value_size)
     ax2.quiver(lons_wind, lats_wind, x_winds2, y_winds2, transform=ccrs.PlateCarree(),color='indianred', width=.0016)
 
-    plt.subplots_adjust(wspace=0.08)
+    plt.subplots_adjust(wspace=0.16)
 
     plt.show()
-
 
 
 def plot_centroids(population_data, countries_list = ['benin', 'burkina faso', 'gambia', 'ghana', 'guinea',
@@ -1265,11 +1273,11 @@ def plot_centroids(population_data, countries_list = ['benin', 'burkina faso', '
         gl = ax.gridlines(linestyle='--',color='black', draw_labels=True, alpha=0)
     gl.top_labels = False
     gl.right_labels = False
-    gl.xlabel_style = {'size': 12}
-    gl.ylabel_style = {'size': 12}
+    gl.xlabel_style = {'size': 18}
+    gl.ylabel_style = {'size': 18}
     #axis labeling
-    ax.text(-0.06, 0.55, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=14)
-    ax.text(0.5, -0.1, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
+    ax.text(-0.08, 0.55, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=20)
+    ax.text(0.5, -0.1, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=20)
 
     for idx,country in enumerate(countries_list):
         latitude = population_data.iloc[:,1].loc[population_data['name'] == str(country).title()].values[0]
@@ -1298,16 +1306,20 @@ def plot_centroids(population_data, countries_list = ['benin', 'burkina faso', '
         for label, color in zip(country_names, color_list)
     ]
 
-    ax.legend(handles=handles, prop={'size': 12}, handler_map={mpatches.Circle: HandlerEllipse()})
+    ax.legend(handles=handles, prop={'size': 14}, handler_map={mpatches.Circle: HandlerEllipse()})
     
     #plot+info
     #plt.contourf(lons, lats, data, transform=ccrs.PlateCarree(),cmap='YlOrRd')
-    plt.title(f'{title}', size=14, pad=15, weight='bold')
+    plt.title(f'{title}', size=20, pad=15, weight='bold')
     plt.xlabel('Latitude')
     plt.show()
 
-def plot_gpw_data(population_array, lats, lons, extent=[-30,29,-15,29], borders = True, cbar_min = 0, cbar_max = 1000000, unit = 1,
-                  population_data =[], title='', figsize = (16,8), shrink=1, labelsize=12, lat_space = -0.07, cmap = cmocean.tools.lighten(cmo.matter, 0.85)):
+
+def plot_gpw_data(population_array, lats, lons, extent=[-30,29,-15,29], borders = True,
+                  cbar_min = 0, cbar_max = 1000000, unit = 1, population_data =[],
+                  title='', figsize = (16,8), shrink=1, labelsize=12, lon_space = -0.12, lat_space = -.15,
+                  cmap = cmocean.tools.lighten(cmo.matter, 0.85), text_size = 36,
+                  value_size = 30, w_space = .22, cbar_pad = .08, cbar_labelpad = .1):
 
     fig, axes = plt.subplots(1,2, figsize=figsize, subplot_kw={"projection": ccrs.PlateCarree()})
 
@@ -1315,16 +1327,16 @@ def plot_gpw_data(population_array, lats, lons, extent=[-30,29,-15,29], borders 
     gl1 = axes[0].gridlines(linestyle='--',color='black', draw_labels=True)
     gl1.top_labels = False
     gl1.right_labels = False
-    gl1.xlabel_style = {'size': 12}
-    gl1.ylabel_style = {'size': 12}
+    gl1.xlabel_style = {'size': value_size}
+    gl1.ylabel_style = {'size': value_size}
 
     axes[0].coastlines(resolution="50m",linewidth=1)
     if borders:
         axes[0].add_feature(cf.BORDERS)
     #axis labeling
-    axes[0].text(-0.06, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=axes[0].transAxes, size=14)
-    axes[0].text(0.5, lat_space, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=axes[0].transAxes, size=14)
-    axes[0].set_title('GPW Data Centroids for Selected Countries', size=14, pad=15, weight='bold')  
+    axes[0].text(lon_space, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=axes[0].transAxes, size=text_size)
+    axes[0].text(0.5, lat_space, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=axes[0].transAxes, size=text_size)
+    axes[0].set_title('GPW Data Centroids for Selected Countries', size=text_size, pad=15, weight='bold')  
         
     for pop_file in population_data:
         for idx, x_coord in enumerate(pop_file['CENTROID_X']):
@@ -1334,28 +1346,34 @@ def plot_gpw_data(population_array, lats, lons, extent=[-30,29,-15,29], borders 
     gl2 = axes[1].gridlines(linestyle='--',color='black', draw_labels=True)
     gl2.top_labels = False
     gl2.right_labels = False
-    gl2.xlabel_style = {'size': 12}
-    gl2.ylabel_style = {'size': 12}
+    gl2.xlabel_style = {'size': value_size}
+    gl2.ylabel_style = {'size': value_size}
 
     axes[1].coastlines(resolution="50m",linewidth=1)
     if borders:
         axes[1].add_feature(cf.BORDERS)
     #axis labeling
-    axes[1].text(-0.06, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=axes[1].transAxes, size=14)
-    axes[1].text(0.5, lat_space, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=axes[1].transAxes, size=14)
-    axes[1].set_title('GPW Data Mapped to MERRA-2 Grid', size=14, pad=15, weight='bold')   
+    axes[1].text(lon_space, 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=axes[1].transAxes, size=text_size)
+    axes[1].text(0.5, lat_space, 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=axes[1].transAxes, size=text_size)
+    axes[1].set_title('GPW Data Mapped to MERRA-2 Grid', size=text_size, pad=15, weight='bold')   
 
     quadmesh2 = axes[1].pcolormesh(lons, lats, population_array, transform=ccrs.PlateCarree(),cmap=cmap)
     quadmesh2.set_clim(vmin=cbar_min, vmax=cbar_max * unit)
 
-    
+    #change cbar parameter (only change last 2)
+    cbar_ax = fig.add_axes([0.92, 0.243, 0.018, 0.517])
+    # cb = fig.colorbar(quadmesh2, orientation="vertical", ax=cbar_ax)
 
-    cb = fig.colorbar(quadmesh2, orientation="vertical", pad=0.02, aspect=16, shrink=shrink, ax=axes.ravel().tolist())
-    cb.set_label('$\\it{Population\ in\ Millions}$',size=labelsize,rotation=90,labelpad=15)
+    cb = fig.colorbar(quadmesh2, orientation="vertical", pad=cbar_pad, aspect = 16, shrink=shrink, cax=cbar_ax)
+
+    # plt.colorbar(quadmesh2,fraction=0.046, pad=0.04, shrink = shrink)
+    cb.set_label('$\\it{Population\ in\ Millions}$',size=value_size,rotation=90,labelpad = cbar_labelpad)
     cb.ax.set_yticklabels(['no data', '0.2', '0.4', '0.6', '0.8',r'$\geq 1$']) 
-    cb.ax.tick_params(labelsize=12)
-    #plt.title(f'{title}', size=14, pad=15, weight='bold') 
+    cb.ax.tick_params(labelsize=value_size)
 
+    # fig.tight_layout()
+    plt.subplots_adjust(wspace=w_space)
+    #plt.title(f'{title}', size=14, pad=15, weight='bold') 
 
 #marisanos and cyangs answer from:
 #https://stackoverflow.com/questions/18602660/matplotlib-bar3d-clipping-problems
@@ -1554,13 +1572,108 @@ def plot_barchart3d(data1, data2, lons_onedim, lats_onedim, title_1 = '', title_
 
     plt.show()
 
+def plot_simulation_comparison(data, lons, lats, titles='', date='', data_values='', extent=[-150, 150, -90, 90],
+                    borders = False, bodele = False, plot_grids = False, add_source_region = False,
+                    add_bodele_source_exclusive = False, add_bodele_source_exclusive_alpha = 1, source_region_alpha = 1, source_region_color = 'black', source_region_lw = 0.2, source_region_fill = False,
+                    cbar_color = 'YlOrRd', cbar_min = 0, cbar_max = 7, unit = 1, figsize = (16,8),
+                    rows = 1, columns = 1, shrink=1, labelsize=12, unit_text='l', text_size=35, value_size =30,
+                    scientific_y=[2.2,3.2], lat_space = [-.15, -.15], lon_space = [-0.12,-0.12], rotation=0, cbar_labelpad=45,
+                    scientific_unit = '1e-7', w_space = .22, cb_frac = True, stat_model = False):
+    #size, extent and cartopy projection
+    # fig = plt.figure(figsize=(16,8))
+    # ax = plt.axes(projection=ccrs.PlateCarree())
+    # ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+    fig, axes = plt.subplots(rows,columns, figsize=figsize, subplot_kw={"projection": ccrs.PlateCarree()})
+
+    qaudmesh = dict()
+    cb = dict()
+    contourf = dict()
+
+    for i in range(len(data)):
+
+        axes[i].set_extent(extent, crs=ccrs.PlateCarree())
+
+        #draw bodélé depression?
+        if bodele:
+            #bodélé coords: 16°05'-17°38'N/15°50'-18°50'E
+            #source: https://web.archive.org/web/20120924181446/http://ramsar.wetlands.org/Portals/15/CHAD.pdf
+            axes[i].add_patch(Rectangle((15.5,16.05), (18.05-15.5), (17.38-16.05),edgecolor = 'black',fill=False,lw=2, linestyle='--'))
+
+        #additional geographical information
+        axes[i].coastlines(resolution="50m",linewidth=1)
+        if(borders):
+            axes[i].add_feature(cf.BORDERS)
+        #gridlines
+        gl = axes[i].gridlines(linestyle='--',color='black', draw_labels=True)
+        gl.top_labels = False
+        gl.right_labels = False
+        gl.xlabel_style = {'size': value_size}
+        gl.ylabel_style = {'size': value_size}
+        #axis labeling
+        axes[i].text(lat_space[i], 0.5, 'Latitude', va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=axes[i].transAxes, size=text_size)
+        axes[i].text(0.5, lon_space[i], 'Longitude', va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=axes[i].transAxes, size=text_size)
+        #plot+info
+        if i==1:
+            if add_source_region:
+            
+                for pixel in return_region_pixel_array(region_name = 'upper_left'):
+                    add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+
+                #right
+                for pixel in return_region_pixel_array(region_name = 'bodele'):
+                    add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+
+                for pixel in return_region_pixel_array(region_name = 'upper_right'):
+                    add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+                
+                for pixel in return_region_pixel_array(region_name = 'upper_right_corner'):
+                    add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=source_region_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+
+            if add_bodele_source_exclusive:
+                    for pixel in return_region_pixel_array(region_name = 'bodele'):
+                        add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=add_bodele_source_exclusive_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+        
+        if stat_model:
+            if i==0:
+                for pixel in return_region_pixel_array(region_name = 'bodele'):
+                    add_pixel2(axes[i],lons[pixel[1]], lats[pixel[0]], alpha=add_bodele_source_exclusive_alpha, color = source_region_color, lw=source_region_lw, linestyle='solid', fill=source_region_fill)
+
+        if plot_grids:
+            qaudmesh[i] = axes[i].pcolormesh(lons, lats, data[i], transform=ccrs.PlateCarree(),cmap=cbar_color[i])
+            qaudmesh[i].set_clim(vmin=cbar_min[i], vmax=cbar_max[i] * unit[i])
+        else:
+            contourf[i] = axes[i].contourf(lons, lats, data[i], transform=ccrs.PlateCarree(),cmap=cbar_color[i])
+        # plt.title(f'{title}{date}', size=14, pad=15, weight='bold')
+        axes[i].set_title(f'{titles[i]}{date[i]}', size=text_size, pad=15, weight='bold')
+        plt.xlabel('Latitude')
+
+        if i==1:
+        #colorbar
+            cbar_ax = fig.add_axes([0.92, 0.242, 0.018, 0.522])
+            if plot_grids:
+                cb[i] = fig.colorbar(qaudmesh[i], orientation="vertical", pad=0.04, aspect=16, shrink=shrink, cax=cbar_ax)
+            else:
+                cb[i] = fig.colorbar(contourf[i], orientation="vertical", pad=0.04, aspect=16, shrink=shrink, ax=axes[i])
+            if cb_frac:
+                cb[i].set_label(data_values[i],size=value_size+8,rotation=rotation,labelpad=cbar_labelpad)
+            else:
+                cb[i].set_label(data_values[i],size=value_size,rotation=rotation,labelpad=cbar_labelpad)
+            cb[i].ax.tick_params(labelsize=value_size)
+            cb[i].ax.yaxis.offsetText.set_fontsize(value_size)
+            if plot_grids:
+                cb[i].ax.text(-0.25, scientific_y[i], scientific_unit, va='bottom', ha='left', size=value_size)
+
+        plt.subplots_adjust(wspace=w_space)
+
+
 
 def plot_ols_data(real_data, predicted_values, y_name= '', x_name = '', title=f'', fig_size=(16,8)):
 
     fig, ax = plt.subplots()
 
-    ax.plot(range(real_data.shape[0]), real_data.iloc[: ,0],"--", label="Real Values")
-    ax.plot(range(real_data.shape[0]), predicted_values,"--", label="OLS Predicted Values")
+    ax.plot(range(real_data.shape[0]), real_data.iloc[: ,0],"-", label="Real Values", linewidth= .5)
+    ax.plot(range(real_data.shape[0]), predicted_values,"--", label="OLS Predicted Values", linewidth= .8)
     fig.set_size_inches(fig_size)
 
     # ax.plot(x1, aod_reg_predictions, "o", label="Data")
@@ -1568,10 +1681,289 @@ def plot_ols_data(real_data, predicted_values, y_name= '', x_name = '', title=f'
     # ax.plot(np.hstack((x1, x1n)), np.hstack((ypred, ynewpred)), "r", label="OLS prediction")
     ax.legend(loc="best")
     ax.text(-0.03, 0.55, y_name, va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=14)
-    ax.text(0.5, -0.1, x_name, va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
+    ax.text(0.5, -0.15, x_name, va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
     #plot+info
     #plt.contourf(lons, lats, data, transform=ccrs.PlateCarree(),cmap='YlOrRd')
     plt.title(title, size=14, pad=15, weight='bold')
+
+def plot_stata_input_response(input_dfs, fig_size=(16,4), y_name = '', x_name = '', titles = [], main_title='', colors=['b', 'b', 'b'],ylim=[], auto_scale=False, plot_ci=True, invert_x_axis=False):
+
+    fig, axes = plt.subplots(nrows = 1, ncols = 3)
+
+    
+    # ax.fill_between(coefficient_array, (coefficient_array.shape[0]-lower_end), (coefficient_array.shape[0]+upper_end), color='b', alpha=.1)
+    # ax.plot(range(real_data.shape[0]), predicted_values,"--", label="OLS Predicted Values", linewidth= .8)
+    fig.set_size_inches(fig_size)
+
+
+    for idx,input_df in enumerate(input_dfs):
+        for index, row in input_df.iterrows():
+
+            if index == 1: #lag0 response
+                l0_response = np.float(row[1])
+            if index == 2: #lag0 confidence interval
+                l0_ci = row[1]
+            if index == 3: #lag1 response
+                l1_response = np.float(row[1])
+            if index == 4: #lag1 confidence interval
+                l1_ci = row[1]
+            if index == 5: #lag2 response
+                l2_response = np.float(row[1])
+            if index == 6: #lag2 confidence interval
+                l2_ci = row[1]
+            if index == 7: #lag3 response
+                l3_response = np.float(row[1])
+            if index == 8: #lag3 confidence interval
+                l3_ci = row[1]
+            if index == 9: #lag4 response
+                l4_response = np.float(row[1])
+            if index == 10: #lag4 confidence interval
+                l4_ci = row[1]
+            if index == 11: #lag5 response
+                l5_response = np.float(row[1])
+            if index == 12: #lag5 confidence interval
+                l5_ci = row[1]
+
+        coefficient_array = [l0_response,l1_response,l2_response,l3_response,l4_response,l5_response]
+        coefficient_array = np.asarray(coefficient_array)
+        coefficient_array_temp = coefficient_array.copy()
+        omega = round((coefficient_array*100).sum(),3)
+        coefficient_array[1] = coefficient_array[0] + coefficient_array[1]
+        coefficient_array[2] = coefficient_array[1] + coefficient_array[2]
+        coefficient_array[3] = coefficient_array[2] + coefficient_array[3]
+        coefficient_array[4] = coefficient_array[3] + coefficient_array[4]
+        coefficient_array[5] = coefficient_array[4] + coefficient_array[5]
+
+        
+        lower_end = [np.float(l0_ci.split(',')[0]),np.float(l1_ci.split(',')[0]),np.float(l2_ci.split(',')[0]),np.float(l3_ci.split(',')[0]),np.float(l4_ci.split(',')[0]),np.float(l5_ci.split(',')[0])]
+        lower_end_difs = [abs(coefficient_array_temp[0]-lower_end[0]),abs(coefficient_array_temp[1]-lower_end[1]),abs(coefficient_array_temp[2]-lower_end[2]),
+                          abs(coefficient_array_temp[3]-lower_end[3]),abs(coefficient_array_temp[4]-lower_end[4]),abs(coefficient_array_temp[5]-lower_end[5])]
+
+
+        lower_end[1] = coefficient_array[1] - lower_end_difs[1]
+        lower_end[2] = coefficient_array[2] - lower_end_difs[2]
+        lower_end[3] = coefficient_array[3] - lower_end_difs[3]
+        lower_end[4] = coefficient_array[4] - lower_end_difs[4]
+        lower_end[5] = coefficient_array[5] - lower_end_difs[5] 
+
+        upper_end = [np.float(l0_ci.split(',')[1]),np.float(l1_ci.split(',')[1]),np.float(l2_ci.split(',')[1]),np.float(l3_ci.split(',')[1]),np.float(l4_ci.split(',')[1]),np.float(l5_ci.split(',')[1])]
+        upper_end_difs = [abs(coefficient_array_temp[0]-upper_end[0]),abs(coefficient_array_temp[1]-upper_end[1]),abs(coefficient_array_temp[2]-upper_end[2]),
+                          abs(coefficient_array_temp[3]-upper_end[3]),abs(coefficient_array_temp[4]-upper_end[4]),abs(coefficient_array_temp[5]-upper_end[5])]
+
+        upper_end[1] = coefficient_array[1] + upper_end_difs[1]
+        upper_end[2] = coefficient_array[2] + upper_end_difs[2]
+        upper_end[3] = coefficient_array[3] + upper_end_difs[3]
+        upper_end[4] = coefficient_array[4] + upper_end_difs[4]
+        upper_end[5] = coefficient_array[5] + upper_end_difs[5]  
+        
+        
+        lower_end = np.asarray(lower_end)
+        upper_end = np.asarray(upper_end)
+        coefficient_array *= 100
+        lower_end*=100
+        upper_end*=100
+        #print(lower_end)
+        axes[idx].plot(range(coefficient_array.shape[0]), coefficient_array,"-", label="Response", linewidth= .8, color=colors[idx])
+        axes[idx].hlines(y=0, xmin=0, xmax=coefficient_array.shape[0]-1, color='black', linestyle='--', linewidth= .7)
+        if(plot_ci):
+            axes[idx].fill_between(range(coefficient_array.shape[0]), (lower_end), (upper_end), color=colors[idx], alpha=.1)
+        if (auto_scale==False):
+            axes[idx].set_ylim([ylim[0], ylim[1]])
+        # z = np.polyfit(range(4), np.asarray(coefficient_array[:4]), 1)
+        # p = np.poly1d(z)
+        # axes[idx].plot(range(np.asarray(coefficient_array).shape[0]),p(range(np.asarray(coefficient_array).shape[0])),"b--", linewidth=.5)
+        axes[idx].text(0.02, 0.98, f'$\Omega_{5}$ = {omega}%', ha="left", va="top", transform=axes[idx].transAxes, size=14)
+        axes[idx].text(-0.15, 0.5, y_name, va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=axes[idx].transAxes, size=14)
+        axes[idx].text(0.5, -0.2, x_name, va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=axes[idx].transAxes, size=14)
+        axes[idx].set_title(f'{titles[idx]}', size=14, pad=15, weight='bold')
+        if (invert_x_axis):
+            axes[idx].invert_xaxis()
+    fig.suptitle(main_title,  weight='bold', size=16)
+    fig.subplots_adjust(wspace=0.3, top = 0.8)
+
+
+def plot_stata_input_response_cont(input_dfs, fig_size=(16,4), y_name = '', x_name = '', titles = [], main_title='', colors=['b', 'b', 'b'], ylim=[]):
+
+    l0_responses = []
+    lower_ends = []
+    upper_ends = []
+
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    for idx,input_df in enumerate(input_dfs):
+        for index, row in input_df.iterrows():
+
+            if index == 1: #lag0 response
+                l0_response = np.float(row[1])
+            if index == 2: #lag0 confidence interval
+                l0_ci = row[1]
+
+            # l0_responses.append(l0_response*100)
+
+        lower_end = np.float(l0_ci.split(',')[0])
+        lower_ends.append(lower_end*100)
+
+        upper_end = np.float(l0_ci.split(',')[1])
+        upper_ends.append(upper_end*100)
+
+        ax.fill_between([idx], (lower_end*100), (upper_end*100), color=colors[idx], alpha=.5)
+
+        ax.scatter(x=idx, 
+                marker='o', s=50, 
+                y=l0_response*100, color=colors[idx], alpha=1)
+
+        # ax.plot(range(3), l0_responses,"-", label="Response", linewidth= .8, color=colors[idx])
+        # ax.hlines(y=0, color='black', linestyle='--', linewidth= .7)
+        
+
+    ax.set_title(f'{main_title}', size=14, pad=15, weight='bold')
+    ax.set_xticks(range(len(input_dfs)))
+    ax.set_xticklabels(titles)
+    # ax.set_ylim([min(lower_ends)-abs(max(upper_ends)-min(lower_ends))/2, 0.5])
+    ax.set_ylim([ylim[0], ylim[1]])
+
+    # ax.text(0.02, 0.98, f'$\Omega_{5}$ = {omega}%', ha="left", va="top", transform=axes[idx].transAxes, size=14)
+    ax.text(-0.1, 0.5, y_name, va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=14)
+    # ax.text(0.5, -0.15, x_name, va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
+
+
+    ax.annotate('Predicted Values', xy=(0.25, -0.28), xytext=(0.25, -0.4), 
+            xycoords='axes fraction', 
+            textcoords='axes fraction', 
+            fontsize=12, ha='center', va='bottom',
+            bbox=dict(boxstyle='square', fc='white', ec='black'),
+            arrowprops=dict(arrowstyle='-[, widthB=7.1, lengthB=1.2', lw=.5, color='black'))
+
+    _ = ax.annotate('Simulated Values', xy=(0.79, -0.28), xytext=(0.79, -0.4), 
+                    xycoords='axes fraction', 
+                    textcoords='axes fraction', 
+                    fontsize=12, ha='center', va='bottom',
+                    bbox=dict(boxstyle='square', fc='white', ec='black'),
+                    arrowprops=dict(arrowstyle='-[, widthB=7.1, lengthB=1.2', lw=.5, color='black'))
+
+    plt.axhline(y=0, color='black', linestyle='--', linewidth=.7)
+
+def plot_stata_input_response_cont_bodele(input_dfs, fig_size=(16,4), y_name = '', x_name = '', titles = [], main_title='', colors=['b', 'b', 'b'], ylim=[]):
+
+    l0_responses = []
+    lower_ends = []
+    upper_ends = []
+
+    l1_responses = []
+    lower_ends_l1 = []
+    upper_ends_l1 = []
+
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    idx = 0
+
+    for col in input_dfs.columns[1:]:
+        for index, row in input_dfs[col].iteritems():
+
+            if index == 1: #lag0 response
+                l0_response = np.float(row)
+            if index == 2: #lag0 confidence interval
+                l0_ci = row
+            if index == 3: #lag1 response
+                l1_response = np.float(row)
+            if index == 4: #lag1 confidence interval
+                l1_ci = row
+
+            # l0_responses.append(l0_response*100)
+
+        lower_end = np.float(l0_ci.split(',')[0])
+        lower_ends.append(lower_end*100)
+
+        upper_end = np.float(l0_ci.split(',')[1])
+        upper_ends.append(upper_end*100)
+
+        lower_end_l1 = np.float(l1_ci.split(',')[0])
+        lower_ends_l1.append(lower_end*100)
+
+        upper_end_l1 = np.float(l1_ci.split(',')[1])
+        upper_ends_l1.append(upper_end_l1*100)
+
+        ax.fill_between([idx], (lower_end*100), (upper_end*100), color=colors[idx], alpha=.5)
+        ax.fill_between([idx+1], (lower_end_l1*100), (upper_end_l1*100), color=colors[idx], alpha=.5)
+
+        ax.scatter(x=idx, 
+                marker='o', s=50, 
+                y=l0_response*100, color=colors[idx], alpha=1)
+        
+        ax.scatter(x=idx+1, 
+                marker='o', s=50, 
+                y=l1_response*100, color=colors[idx], alpha=1)
+
+        idx+=2
+
+        # ax.plot(range(3), l0_responses,"-", label="Response", linewidth= .8, color=colors[idx])
+        # ax.hlines(y=0, color='black', linestyle='--', linewidth= .7)
+        
+
+    ax.set_title(f'{main_title}', size=14, pad=15, weight='bold')
+    ax.set_xticks(range(6))
+    ax.set_xticklabels(titles)
+    # ax.set_ylim([min(lower_ends)-abs(max(upper_ends)-min(lower_ends))/2, 0.5])
+    ax.set_ylim([ylim[0], ylim[1]])
+
+    # ax.text(0.02, 0.98, f'$\Omega_{5}$ = {omega}%', ha="left", va="top", transform=axes[idx].transAxes, size=14)
+    ax.text(-0.1, 0.5, y_name, va='bottom', ha='center', rotation='vertical', rotation_mode='anchor', transform=ax.transAxes, size=14)
+    # ax.text(0.5, -0.15, x_name, va='bottom', ha='center', rotation='horizontal', rotation_mode='anchor', transform=ax.transAxes, size=14)
+
+    plt.axhline(y=0, color='black', linestyle='--', linewidth=.7)
+
+def barplot_plausibility(data1, data2, title = '', xlabels='', ylabel='',
+            bar_colors = ['#76d7c3', '#f0b27a', '#84929e', '#f7dc6f', '#85c1e9'],
+            figsize = (16,9), legend_text = [], text_size = 35, value_size = 30, ylabelpad = 15, title_pad = 15):
+
+  index = np.arange(12)
+  bar_width = 0.35
+
+  fig, ax = plt.subplots(figsize=figsize)
+  gpw_bars = ax.bar(index, data1, bar_width,
+                  label=legend_text[0], color = bar_colors[0])
+
+  wb_bars = ax.bar(index+bar_width, data2,
+                  bar_width, label=legend_text[1], color = bar_colors[1])
+
+  ax.set_xlabel('Country', size = text_size, labelpad=20)
+  ax.set_ylabel(ylabel, size = text_size, labelpad=20)
+  ax.set_title(title, size = text_size, weight='bold')
+  ax.set_xticks(index + bar_width / 2)
+  ax.set_xticklabels(xlabels, size=value_size)
+  ax.legend()
+
+
+  # baro[idx] = ax[idx].bar(
+  #     x=np.arange(data1[idx].size),
+  #     height=data1[idx]['value'],
+  #     tick_label=data1[idx].index, 
+  #     color = bar_colors
+  # )
+
+
+  # Axis formatting.
+  ax.spines['top'].set_visible(False)
+  ax.spines['right'].set_visible(False)
+  ax.spines['left'].set_visible(False)
+  ax.spines['bottom'].set_color('#DDDDDD')
+  ax.tick_params(bottom=False, left=False)
+  ax.set_axisbelow(True)
+  ax.yaxis.grid(True, color='#EEEEEE')
+  ax.xaxis.grid(False)
+
+
+  # Add labels and a title.
+  # if(idx is 0):
+  #   ax.set_ylabel(ylabels[idx], labelpad=ylabelpad, color='#333333', fontsize=text_size, weight='bold')
+  # ax[idx].set_xlabel(xlabels[idx], labelpad=15, color='#333333')
+#   ax.set_title(titles[idx], pad=title_pad, color='#333333',
+#               weight='bold', size = text_size)
+
+  ax.tick_params(labelsize=value_size)
+
+  plt.show()
+
 
 
 "--------------------------------------------------------------------"
@@ -1696,37 +2088,37 @@ def build_source_array(input_array, longitudes, latitudes):
 
     source_array = np.zeros((input_array.shape[0], longitudes, latitudes), dtype='float32')
 
-    source_array[:,77,46] = input_array[:,77,46]
     source_array[:,77,47] = input_array[:,77,47]
     source_array[:,77,48] = input_array[:,77,48]
-    source_array[:,76,47] = input_array[:,76,47]
+    source_array[:,77,49] = input_array[:,77,49]
     source_array[:,76,48] = input_array[:,76,48]
     source_array[:,76,49] = input_array[:,76,49]
-    source_array[:,75,48] = input_array[:,75,48]
+    source_array[:,76,50] = input_array[:,76,50]
     source_array[:,75,49] = input_array[:,75,49]
-    source_array[:,74,47] = input_array[:,74,47]
+    source_array[:,75,50] = input_array[:,75,50]
     source_array[:,74,48] = input_array[:,74,48]
-    source_array[:,73,46] = input_array[:,73,46]
+    source_array[:,74,49] = input_array[:,74,49]
     source_array[:,73,47] = input_array[:,73,47]
     source_array[:,73,48] = input_array[:,73,48]
-    source_array[:,72,46] = input_array[:,72,46]
+    source_array[:,73,49] = input_array[:,73,49]
     source_array[:,72,47] = input_array[:,72,47]
-    source_array[:,71,42] = input_array[:,71,42]
+    source_array[:,72,48] = input_array[:,72,48]
     source_array[:,71,43] = input_array[:,71,43]
     source_array[:,71,44] = input_array[:,71,44]
     source_array[:,71,45] = input_array[:,71,45]
     source_array[:,71,46] = input_array[:,71,46]
-    source_array[:,70,42] = input_array[:,70,42]
+    source_array[:,71,47] = input_array[:,71,47]
     source_array[:,70,43] = input_array[:,70,43]
     source_array[:,70,44] = input_array[:,70,44]
     source_array[:,70,45] = input_array[:,70,45]
-    source_array[:,69,41] = input_array[:,69,41]
+    source_array[:,70,46] = input_array[:,70,46]
     source_array[:,69,42] = input_array[:,69,42]
     source_array[:,69,43] = input_array[:,69,43]
     source_array[:,69,44] = input_array[:,69,44]
-    source_array[:,68,42] = input_array[:,68,42]
+    source_array[:,69,45] = input_array[:,69,45]
     source_array[:,68,43] = input_array[:,68,43]
-    source_array[:,67,42] = input_array[:,67,42]
+    source_array[:,68,44] = input_array[:,68,44]
+    source_array[:,67,43] = input_array[:,67,43]
 
     #right:
     source_array[:,69,71] = input_array[:,69,71]
@@ -1860,37 +2252,37 @@ def build_source_array(input_array, longitudes, latitudes):
 def fill_with_source(uninitialized_array, source_array):
     #ToDO:
     #modify so it uses return_region_pixel_array
-    uninitialized_array[77,46] = source_array[77,46]
     uninitialized_array[77,47] = source_array[77,47]
     uninitialized_array[77,48] = source_array[77,48]
-    uninitialized_array[76,47] = source_array[76,47]
+    uninitialized_array[77,49] = source_array[77,49]
     uninitialized_array[76,48] = source_array[76,48]
     uninitialized_array[76,49] = source_array[76,49]
-    uninitialized_array[75,48] = source_array[75,48]
+    uninitialized_array[76,50] = source_array[76,50]
     uninitialized_array[75,49] = source_array[75,49]
-    uninitialized_array[74,47] = source_array[74,47]
+    uninitialized_array[75,50] = source_array[75,50]
     uninitialized_array[74,48] = source_array[74,48]
-    uninitialized_array[73,46] = source_array[73,46]
+    uninitialized_array[74,49] = source_array[74,49]
     uninitialized_array[73,47] = source_array[73,47]
     uninitialized_array[73,48] = source_array[73,48]
-    uninitialized_array[72,46] = source_array[72,46]
+    uninitialized_array[73,49] = source_array[73,49]
     uninitialized_array[72,47] = source_array[72,47]
-    uninitialized_array[71,42] = source_array[71,42]
+    uninitialized_array[72,48] = source_array[72,48]
     uninitialized_array[71,43] = source_array[71,43]
     uninitialized_array[71,44] = source_array[71,44]
     uninitialized_array[71,45] = source_array[71,45]
     uninitialized_array[71,46] = source_array[71,46]
-    uninitialized_array[70,42] = source_array[70,42]
+    uninitialized_array[71,47] = source_array[71,47]
     uninitialized_array[70,43] = source_array[70,43]
     uninitialized_array[70,44] = source_array[70,44]
     uninitialized_array[70,45] = source_array[70,45]
-    uninitialized_array[69,41] = source_array[69,41]
+    uninitialized_array[70,46] = source_array[70,46]
     uninitialized_array[69,42] = source_array[69,42]
     uninitialized_array[69,43] = source_array[69,43]
     uninitialized_array[69,44] = source_array[69,44]
-    uninitialized_array[68,42] = source_array[68,42]
+    uninitialized_array[69,45] = source_array[69,45]
     uninitialized_array[68,43] = source_array[68,43]
-    uninitialized_array[67,42] = source_array[67,42]
+    uninitialized_array[68,44] = source_array[68,44]
+    uninitialized_array[67,43] = source_array[67,43]
 
     #right:
     uninitialized_array[69,71] = source_array[69,71]
@@ -2019,105 +2411,6 @@ def fill_with_source(uninitialized_array, source_array):
 
     return uninitialized_array
 
-
-#to be deleted?
-@jit
-def advection_diffusion_fd_old(num_time_steps, num_x_steps, num_y_steps, min_time, max_time,
-                           source_input_latitudes, source_input_longitudes, diff,
-                           source_input_array, wx,  wy, datatype = 'float32'):
-    """
-    Returns dust field for 2D advection-diffusion and given input array
-    """
-    dt = np.float32(0.5)
-    dx = 1
-    dy = 1
-
-
-
-    f_sol = np.zeros((num_time_steps, num_y_steps, num_x_steps), dtype=datatype)
-
-    source_array = build_source_array(source_input_array, 91, 105)
-   
-    # ywind mulitplier: *3600 (für h) / 55597.46332227382 =  0.06475115562615506 = 0.06475
-    # xwind mulitplier: *3600 (für h) / 65305.56055924967 =  0.05512547429607979 = 0.05513
-
-    # fast
-    ywind_mtpl = np.float(0.06475115562615506)
-    xwind_mtpl = np.float(0.05512547429607979)
-
-    # slow
-    # ywind_mtpl = np.float32(0.03237557781307753)
-    # xwind_mtpl = np.float32(0.027562737148039897)
-
-    f_sol_current = np.zeros((num_y_steps, num_x_steps), dtype=datatype)
-
-    #wiki loop
-    for n in range(min_time,max_time-1):
-        # if first:
-        f_sol_current = fill_with_source(f_sol_current, source_array[n,:,:])
-        f_sol_first = np.zeros((num_y_steps, num_x_steps), dtype=datatype)
-        for j in range(1,num_y_steps-1):
-            for i in range(1,num_x_steps-1):
-                
-                # if ( (f_sol[n,j,i+1] == 0) and ( f_sol[n,j,i-1] == 0) and (f_sol[n,j+1,i] == 0) and (f_sol[n,j-1,i] == 0) ):
-                #     continue
-
-                wx0 = ((wx[n,j,i] * xwind_mtpl))
-                wy0 = ((wy[n,j,i] * ywind_mtpl))
-
-                #solution for time n
-                f_sol_first[j,i] = ((dt * diff*(((f_sol_current[j,i+1]-2*f_sol_current[j,i]+f_sol_current[j,i-1])/(dx**2))
-                + ((f_sol_current[j+1,i]-2*f_sol_current[j,i]+f_sol_current[j-1,i])/(dy**2)))
-                - ((wx0) * (dt/(2*dx)) * (f_sol_current[j,i+1]-f_sol_current[j,i-1]))
-                - ((wy0) * (dt/(2*dy)) * (f_sol_current[j+1,i]-f_sol_current[j-1,i]))
-                + f_sol_current[j,i]))
-
-                #set erratic values to 0
-                if (f_sol_first[j,i] < 0):
-                    f_sol_first[j,i] = 0
-
-        f_sol_current = f_sol_first
-
-        #now we have a solution field for n+.5 (that is the next half hour)
-        #we now take this solution as the input for our artificial next half hour time step
-        #it's artificial, because we don't have 'real' data for it and hence create it by using an interpolation (mean)
-        #between n and n+1
-        f_sol_n = f_sol_current
-        #fill with interpolation data
-        f_sol_current = fill_with_source(f_sol_current, ((source_array[n,:,:] + source_array[(n+1),:,:])/2))
-        f_sol_second = np.zeros((num_y_steps, num_x_steps), dtype=datatype)
-
-        for j in range(1,num_y_steps-1):
-            for i in range(1,num_x_steps-1):
-
-                #wind:
-                # to calculate half hour value from hourly data, we take the mean of the wind data from half hour before and half hour after 
-                
-                wx_mean = ((wx[n,j,i] + wx[(n+1),j,i]) / 2) * xwind_mtpl
-
-                wy_mean = ((wy[n,j,i] + wy[(n+1),j,i]) / 2) * ywind_mtpl
-
-                f_sol_second[j,i] = ((dt * diff*(((f_sol_current[j,i+1]-2*f_sol_current[j,i]+f_sol_current[j,i-1])/(dx**2))
-                + ((f_sol_current[j+1,i]-2*f_sol_current[j,i]+f_sol_current[j-1,i])/(dy**2)))
-                - ((wx_mean) * (dt/(2*dx)) * (f_sol_current[j,i+1]-f_sol_current[j,i-1]))
-                - ((wy_mean) * (dt/(2*dy)) * (f_sol_current[j+1,i]-f_sol_current[j-1,i]))
-                + f_sol_current[j,i]))
-
-                if (f_sol_second[j,i] < 0):
-                    f_sol_second[j,i] = 0
-
-        f_sol_current = f_sol_second
-
-        f_sol[n+1] = ((f_sol_second + f_sol_first) / 2)
-        
-
-        # f_sol[n+1,:,:] = fill_with_source(f_sol[n+1,:,:], source_array[(n+1),:,:])
-
-    return f_sol
-
-
-from functions import build_source_array,fill_with_source
-
 @jit
 def advection_diffusion_fd(num_time_steps, num_x_steps, num_y_steps, min_time, max_time,
                            source_input_latitudes, source_input_longitudes, diff,
@@ -2138,17 +2431,12 @@ def advection_diffusion_fd(num_time_steps, num_x_steps, num_y_steps, min_time, m
     # ywind mulitplier: *3600 (für h) / 55597.46332227382 =  0.06475115562615506 = 0.06475
     # xwind mulitplier: *3600 (für h) / 65305.56055924967 =  0.05512547429607979 = 0.05513
 
-    # fast
-    # ywind_mtpl = np.float(0.06475115562615506)
-    # xwind_mtpl = np.float(0.05512547429607979)
-
-    # slow
     ywind_mtpl = np.float32(0.03237557781307753)
     xwind_mtpl = np.float32(0.027562737148039897)
 
     f_sol_current = np.zeros((num_y_steps, num_x_steps), dtype=datatype)
 
-    #wiki loop
+    #loop
     for n in range(min_time,max_time-1):
         # if first:
         f_sol_current = fill_with_source(f_sol_current, source_array[n,:,:])
@@ -2661,6 +2949,21 @@ def create_population_array(population_data, longitudes, latitudes):
     
     return pop_array
 
+def create_population_df(population_data):
+    pop_df = pd.DataFrame(columns=['Benin', 'Burkina Faso', 'Gambia', 'Ghana', 'Guinea', 'Liberia', 'Mali', 'Niger', 'Nigeria', 'Senegal', 'Sierra Leone','Togo'])
+
+    pop_list = []
+
+    for pop_file in population_data:
+        population = 0
+        for idx, x_coord in enumerate(pop_file['CENTROID_X']):
+            population += pop_file['UN_2000_E'][idx]
+        pop_list.append(population)
+
+    pop_df.loc[0] = pop_list
+    
+    return pop_df
+
 def create_population_weight_array_old(population_array):
     pop_array = population_array
     max_value = pop_array.max()
@@ -2719,10 +3022,16 @@ def daily_dust_country_regression(aod_daily_data, daily_bodele_aod_data, precipi
 
     return predicted_daily_aod_data, r_squared_map
 
-def daily_dust_regression(aod_daily_data, daily_bodele_aod_data, precipitation_daily_data, temperature_daily_data, daily_junsep_indices, daily_novapr_indices):
+def daily_dust_regression(dust_daily_data, dust_daily_data_junsep, dust_daily_data_novapr, daily_bodele_dust_data,
+                          daily_bodele_dust_data_junsep, daily_bodele_dust_data_novapr, precipitation_daily_data, precipitation_daily_data_junsep, precipitation_daily_data_novapr,
+                          temperature_daily_data, temperature_daily_data_junsep, temperature_daily_data_novapr, daily_junsep_indices, daily_novapr_indices):
 
-    predicted_daily_aod_data = np.zeros((13515, 91,105), dtype='float32')
+    predicted_daily_dust_data = np.zeros((13515, 91,105), dtype='float32')
+    predicted_daily_dust_data_dry = np.zeros((6707, 91,105), dtype='float32')
+    predicted_daily_dust_data_wet = np.zeros((4514, 91,105), dtype='float32')
     r_squared_map = np.zeros((91,105), dtype='float32')
+    r_squared_map_dry = np.zeros((91,105), dtype='float32')
+    r_squared_map_wet = np.zeros((91,105), dtype='float32')
     
     total_list = [[0,0] for y in range(91*105)]
     idx = 0
@@ -2734,19 +3043,41 @@ def daily_dust_regression(aod_daily_data, daily_bodele_aod_data, precipitation_d
 
     for pixel in total_list:
 
-        y_vector = aod_daily_data[:,pixel[0], pixel[1]][:, np.newaxis]
-        current_regression_data = create_lag_regression_data(daily_bodele_aod_data, 10, [precipitation_daily_data[:,pixel[0], pixel[1]][:, np.newaxis],
+        y_vector = dust_daily_data[:,pixel[0], pixel[1]][:, np.newaxis]
+        y_vector_dry = dust_daily_data_novapr[:,pixel[0], pixel[1]][:, np.newaxis]
+        y_vector_wet = dust_daily_data_junsep[:,pixel[0], pixel[1]][:, np.newaxis]
+
+        current_regression_data = create_lag_regression_data(daily_bodele_dust_data, 10, [precipitation_daily_data[:,pixel[0], pixel[1]][:, np.newaxis],
                                                                 temperature_daily_data[:,pixel[0], pixel[1]][:, np.newaxis]],
                                                                 y_vector, daily_junsep_indices, daily_novapr_indices, dataframe=False)
 
+        current_regression_data_dry = create_lag_regression_data(daily_bodele_dust_data_novapr, 10, [precipitation_daily_data_novapr[:,pixel[0], pixel[1]][:, np.newaxis],
+                                                                temperature_daily_data_novapr[:,pixel[0], pixel[1]][:, np.newaxis]],
+                                                                y_vector_dry, daily_junsep_indices, daily_novapr_indices, dataframe=False)
+
+        current_regression_data_wet = create_lag_regression_data(daily_bodele_dust_data_junsep, 10, [precipitation_daily_data_junsep[:,pixel[0], pixel[1]][:, np.newaxis],
+                                                                temperature_daily_data_junsep[:,pixel[0], pixel[1]][:, np.newaxis]],
+                                                                y_vector_wet, daily_junsep_indices, daily_novapr_indices, dataframe=False)
+
         current_regression_model = sm.OLS(y_vector[10:-1],sm.add_constant(current_regression_data[10:-1])).fit(cov_type='HC1')
         current_predictions = current_regression_model.predict(sm.add_constant(current_regression_data))
-        predicted_daily_aod_data[:,pixel[0], pixel[1]] = current_predictions
+        predicted_daily_dust_data[:,pixel[0], pixel[1]] = current_predictions
+
+        current_regression_model_dry = sm.OLS(y_vector_dry[10:-1],sm.add_constant(current_regression_data_dry[10:-1])).fit(cov_type='HC1')
+        current_predictions_dry = current_regression_model_dry.predict(sm.add_constant(current_regression_data_dry))
+        predicted_daily_dust_data_dry[:,pixel[0], pixel[1]] = current_predictions_dry
+
+        current_regression_model_wet = sm.OLS(y_vector_wet[10:-1],sm.add_constant(current_regression_data_wet[10:-1])).fit(cov_type='HC1')
+        current_predictions_wet = current_regression_model_wet.predict(sm.add_constant(current_regression_data_wet))
+        predicted_daily_dust_data_wet[:,pixel[0], pixel[1]] = current_predictions_wet
 
         r_squared_map[pixel[0], pixel[1]] = float(current_regression_model.summary2().tables[0][1][6])
+        r_squared_map_dry[pixel[0], pixel[1]] = float(current_regression_model_dry.summary2().tables[0][1][6])
+        r_squared_map_wet[pixel[0], pixel[1]] = float(current_regression_model_wet.summary2().tables[0][1][6])
 
 
-    return predicted_daily_aod_data, r_squared_map
+    return predicted_daily_dust_data, predicted_daily_dust_data_dry, predicted_daily_dust_data_wet, r_squared_map, r_squared_map_dry, r_squared_map_wet
+
 
 #ehemals get_mse_data:
 def get_country_mse_data(daily_data, daily_predicted_data, countries_list):
@@ -2765,7 +3096,7 @@ def get_country_mse_data(daily_data, daily_predicted_data, countries_list):
 
 def get_mse_data(daily_data, daily_predicted_data):
 
-    mse_array = np.zeros((13515, 91, 105), dtype='float32')
+    mse_array = np.zeros((daily_data.shape[0], 91, 105), dtype='float32')
 
     total_list = [[0,0] for y in range(91*105)]
     idx = 0
@@ -2833,71 +3164,6 @@ def create_dust_exposure_df(predicted_values, predicted_values_weighted,country_
             
             daily_seasonal_data = np.zeros((return_region_pixel_array(country).shape[0]), dtype='float32')
             daily_seasonal_data_weighted = np.zeros((return_region_pixel_array(country).shape[0]), dtype='float32')
-
-            for day in seasonal_indices_by_year[year_idx]:
-                daily_seasonal_data += daily_country_predicted_values[day]
-                daily_seasonal_data_weighted += daily_country_predicted_values_weighted[day]
-            
-            yearly_country_predicted_values_seasonal[year_idx] = daily_seasonal_data/len(seasonal_indices_by_year[year_idx])
-            yearly_country_predicted_values_weighted_seasonal[year_idx] = daily_seasonal_data_weighted/len(seasonal_indices_by_year[year_idx])
-
-        yearly_countries_predicted_values[idx] = np.sum(yearly_country_predicted_values, axis = 1)/yearly_country_predicted_values.shape[1]
-        yearly_countries_predicted_values_weighted[idx] = np.sum(yearly_country_predicted_values_weighted, axis = 1)/yearly_country_predicted_values_weighted.shape[1]
-
-        yearly_countries_predicted_values_seasonal[idx] = np.sum(yearly_country_predicted_values_seasonal, axis = 1)/yearly_country_predicted_values_seasonal.shape[1]
-        yearly_countries_predicted_values_weighted_seasonal[idx] = np.sum(yearly_country_predicted_values_weighted_seasonal, axis = 1)/yearly_country_predicted_values_weighted_seasonal.shape[1]
-
-
-    dust_exposure_predicted_df = pd.DataFrame(yearly_countries_predicted_values, index = country_list, columns = range(1980,2016+1))
-    dust_exposure_predicted_weighted_df = pd.DataFrame(yearly_countries_predicted_values_weighted, index = country_list, columns = range(1980,2016+1))
-
-    dust_exposure_predicted_seasonal_df = pd.DataFrame(yearly_countries_predicted_values_seasonal, index = country_list, columns = range(1980,2016+1))
-    dust_exposure_predicted_weighted_seasonal_df = pd.DataFrame(yearly_countries_predicted_values_weighted_seasonal, index = country_list, columns = range(1980,2016+1))
-
-    return dust_exposure_predicted_df, dust_exposure_predicted_weighted_df, dust_exposure_predicted_seasonal_df, dust_exposure_predicted_weighted_seasonal_df
-
-# to be deleted?
-def create_dust_exposure_df_weighted(predicted_values, predicted_values_weighted,country_list, years, daily_seasonal_indices):
-    yearly_countries_predicted_values = np.zeros((len(country_list), (2016-1980)+1), dtype='float32')
-    yearly_countries_predicted_values_weighted = np.zeros((len(country_list), (2016-1980)+1), dtype='float32')
-
-    yearly_countries_predicted_values_seasonal = np.zeros((len(country_list), (2016-1980)+1), dtype='float32')
-    yearly_countries_predicted_values_weighted_seasonal = np.zeros((len(country_list), (2016-1980)+1), dtype='float32')
-
-    seasonal_indices_by_year = extract_yearly_indices(years, daily_seasonal_indices)
-
-    for idx, country in enumerate(country_list):
-        daily_country_predicted_values = np.zeros((predicted_values.shape[0], return_region_pixel_array(country).shape[0]), dtype='float32')
-        #get shape of populated pixels array
-        temp_shape = get_pixels_data_one_dim(predicted_values_weighted[0], return_region_pixel_array(country))
-        shape_population_array = temp_shape[temp_shape >= 0]
-        daily_country_predicted_values_weighted = np.zeros((predicted_values_weighted.shape[0], shape_population_array.shape[0]), dtype='float32')
-        for day in range(predicted_values.shape[0]):
-            daily_country_predicted_values[day] = get_pixels_data_one_dim(predicted_values[day], return_region_pixel_array(country))
-            #use temporal data 
-            temp_daily_weighted_data = get_pixels_data_one_dim(predicted_values_weighted[day], return_region_pixel_array(country))
-            #only take values above zero (pixels with no population were set to -1 in the predicted_values_weighted array)
-            temp_data = temp_daily_weighted_data[~np.isnan(temp_daily_weighted_data)]
-            daily_country_predicted_values_weighted[day] = temp_data
-        yearly_country_predicted_values = np.zeros(((2016-1980)+1, return_region_pixel_array(country).shape[0]), dtype='float32')
-        yearly_country_predicted_values_weighted = np.zeros(((2016-1980)+1, shape_population_array.shape[0]), dtype='float32')
-
-        yearly_country_predicted_values_seasonal = np.zeros(((2016-1980)+1, return_region_pixel_array(country).shape[0]), dtype='float32')
-        yearly_country_predicted_values_weighted_seasonal = np.zeros(((2016-1980)+1, shape_population_array.shape[0]), dtype='float32')
-
-        current_days = 0
-        for year_idx in range((2016-1980)+1):
-            if(year_idx%4 == 0):
-                yearly_country_predicted_values[year_idx] = np.sum(daily_country_predicted_values[current_days:current_days+366], axis = 0)/366
-                yearly_country_predicted_values_weighted[year_idx] = np.sum(daily_country_predicted_values_weighted[current_days:current_days+366], axis = 0)/366
-                current_days += 366
-            else:
-                yearly_country_predicted_values[year_idx] = np.sum(daily_country_predicted_values[current_days:current_days+365], axis = 0)/365
-                yearly_country_predicted_values_weighted[year_idx] = np.sum(daily_country_predicted_values_weighted[current_days:current_days+365], axis = 0)/365
-                current_days += 365
-            
-            daily_seasonal_data = np.zeros((return_region_pixel_array(country).shape[0]), dtype='float32')
-            daily_seasonal_data_weighted = np.zeros((shape_population_array.shape[0]), dtype='float32')
 
             for day in seasonal_indices_by_year[year_idx]:
                 daily_seasonal_data += daily_country_predicted_values[day]

@@ -6,11 +6,13 @@ import pandas as pd
 os.environ["PROJ_LIB"] = "C:\\Users\\Daniel\\anaconda3\\Library\\share"; #fixr
 
 
-
 from functions import extract_seasonal_data, hourly_data_to_daily_mean, build_source_array
 from functions import advection_diffusion_fd
 
 from functions import simulation_comparison_animation
+
+import warnings
+warnings.filterwarnings("ignore")
 
 
 parent_directory = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
@@ -85,7 +87,7 @@ def main():
     del simulated_dustmass_hourly_junsep_data
     print('saved simulated dust advection diffusion jun-sep array to \\processed_data')
 
-    print('saving simulated dust advection diffusion jun-sep array to \\processed_data ...')
+    print('saving simulated dust advection diffusion total array to \\processed_data ...')
     with open(parent_directory + '\\processed_data\\simulated_dustmass_daily_data.npy', 'wb') as numpy_array:
         np.save(numpy_array, simulated_dustmass_daily_data)
     del simulated_dustmass_daily_data

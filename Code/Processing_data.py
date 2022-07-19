@@ -4,11 +4,15 @@ import numpy as np
 import pandas as pd
 import gc
 
+os.environ["PROJ_LIB"] = "C:\\Users\\Daniel\\anaconda3\\Library\\share"; #fixr
 
 from functions import process_merra_data, process_outcome_data, hourly_data_to_daily_mean, three_hourly_data_to_daily_mean, extract_seasonal_data
 from functions import three_hourly_data_to_daily_mean
 
 parent_directory = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+
+import warnings
+warnings.filterwarnings("ignore")
 
 def main():
 
@@ -362,32 +366,10 @@ def main():
     del df_mpd_per_cap
     df_mpd_per_cap_growth.to_csv(parent_directory + '\\processed_data\\df_mpd_per_cap_growth.csv')
     del df_mpd_per_cap_growth
-
-    # df_pwt_resid_log.to_csv(parent_directory + '\\processed_data\\pwt_resid_log.csv')
-    # del df_pwt_resid_log
-    # df_wbdi_resid_log.to_csv(parent_directory + '\\processed_data\\wbdi_resid_log.csv')
-    # del df_wbdi_resid_log
-    # df_mpd_resid_log.to_csv(parent_directory + '\\processed_data\\mpd_resid_log.csv')
-    # del df_mpd_resid_log
     print('saved processed outcome data .csv to \\processed_data')
 
     #invoke garbage collector
     gc.collect()
-
-
-    "--------------------------------------------------------------------"
-    '3.1_physical_model'
-    "--------------------------------------------------------------------"
-
-
-    
-
-    
-
-
-    "--------------------------------------------------------------------"
-    '3.3_model_implementation'
-    "--------------------------------------------------------------------"
 
 
     
